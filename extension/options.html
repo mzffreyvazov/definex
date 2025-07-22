@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Quick Definition Settings</title>
+    <style>
+        body { font-family: sans-serif; padding: 10px 20px; width: 400px; }
+        h2 { color: #333; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        select, input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #007acc;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover { background-color: #005a9c; }
+        #status { margin-left: 15px; color: green; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <h2>Quick Definition Settings</h2>
+
+    <div class="form-group">
+        <label for="source">Dictionary Source:</label>
+        <select id="source">
+            <option value="cambridge">Cambridge (Local Server)</option>
+            <option value="merriam-webster">Merriam-Webster</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="mw-key">Merriam-Webster API Key:</label>
+        <input type="text" id="mw-key" placeholder="Enter your API key here">
+    </div>
+
+    <button id="save">Save</button>
+    <span id="status"></span>
+
+    <script src="options.js"></script>
+</body>
+</html>

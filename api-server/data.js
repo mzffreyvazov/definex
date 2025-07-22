@@ -331,4 +331,64 @@ app.get("/api/gemini/:entry", async (req, res) => {
   }
 });
 
+// New endpoint for sentence translation
+app.get("/api/translate/:sentence", async (req, res) => {
+  try {
+    const sentence = decodeURIComponent(req.params.sentence);
+    const targetLanguage = req.query.lang || 'Spanish'; // Default to Spanish if not specified
+    
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(500).json({ error: "GEMINI_API_KEY is not set in the .env file." });
+    }
+    
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
+    
+    const prompt = `
+      You are a professional translator. Your task is to translate the following sentence to ${targetLanguage} and provide contextual information.
+
+      You MUST respond with ONLY a valid JSON object. Do not include any introductory text, explanations, or markdown formatting like \`\`\`json.
+
+      The JSON object must follow this exact structure:
+      {
+        "originalSentence": "the original sentence",
+        "translation": "the sentence translated to ${targetLanguage}",
+        "targetLanguage": "${targetLanguage}",
+        "context": "brief explanation of the meaning or context if needed",
+        "literalTranslation": "word-for-word translation if significantly different from natural translation",
+        "keyPhrases": [
+          {
+            "original": "key phrase from original",
+            "translation": "translation of this phrase",
+            "explanation": "brief explanation if needed"
+          }
+        ]
+      }
+
+      Sentence to translate: "${sentence}"
+
+      - Provide a natural, fluent translation that preserves the original meaning
+      - Include context only if the sentence has cultural references, idioms, or ambiguous meanings
+      - Include literalTranslation only if it differs significantly from the natural translation
+      - Include keyPhrases for important phrases, idioms, or terms that might be difficult to understand
+      - If the sentence cannot be translated meaningfully, return: {"error": "Unable to translate sentence"}
+    `;
+
+    const result = await model.generateContent(prompt);
+    let responseText = result.response.text();
+
+    // Clean the AI's response before parsing
+    const jsonMatch = responseText.match(/```(json)?([\s\S]*?)```/);
+    if (jsonMatch && jsonMatch[2]) {
+      responseText = jsonMatch[2].trim();
+    }
+
+    const jsonResponse = JSON.parse(responseText);
+    res.status(200).json(jsonResponse);
+
+  } catch (error) {
+    console.error("Error processing sentence translation:", error);
+    res.status(500).json({ error: "Failed to translate sentence." });
+  }
+});
+
 module.exports = app;

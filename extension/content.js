@@ -25,10 +25,14 @@ function handleSelection(event) {
     const source = settings.preferredSource || 'cambridge';
     
     let isValidSelection = false;
+    const words = selectedText.split(/\s+/).filter(word => word.length > 0);
+    const isSentence = words.length > 5; // More than 5 words = sentence
     
-    if (source === 'gemini') {
+    if (isSentence) {
+      // For sentences: allow any text with basic validation
+      isValidSelection = selectedText.length > 0 && selectedText.length <= 500; // Reasonable length limit
+    } else if (source === 'gemini') {
       // For Gemini: allow phrases up to 5 words (letters, spaces, hyphens, apostrophes)
-      const words = selectedText.split(/\s+/).filter(word => word.length > 0);
       isValidSelection = words.length >= 1 && words.length <= 5 && 
                        /^[a-zA-Z\s'-]+$/.test(selectedText);
     } else {
@@ -46,9 +50,10 @@ function handleSelection(event) {
     const sourceDisplayName = getSourceDisplayName(source);
     
     let loadingMessage;
-    if (source === 'gemini') {
+    if (isSentence) {
+      loadingMessage = `<span style="font-family: 'Open Sans', sans-serif;">Translating sentence "<strong>${selectedText.substring(0, 50)}${selectedText.length > 50 ? '...' : ''}</strong>" with <em>Gemini AI</em>...</span>`;
+    } else if (source === 'gemini') {
       // Check if it's a single word or phrase for loading message
-      const words = selectedText.split(/\s+/).filter(word => word.length > 0);
       const isPhrase = words.length > 1;
       
       if (isPhrase) {
@@ -61,10 +66,15 @@ function handleSelection(event) {
     }
     
     // Create a placeholder popup while fetching
-    createPopup(event.clientX, event.clientY, loadingMessage);
+    createPopup(event.clientX, event.clientY, loadingMessage, isSentence);
     
-    // Send the selected word to the background script
-    chrome.runtime.sendMessage({ type: 'getDefinition', word: selectedText }, (response) => {
+    // Send the selected text to the background script
+    const messageType = isSentence ? 'translateSentence' : 'getDefinition';
+    const messageData = isSentence 
+      ? { type: messageType, text: selectedText }
+      : { type: messageType, word: selectedText };
+      
+    chrome.runtime.sendMessage(messageData, (response) => {
       if (chrome.runtime.lastError) {
         // Handle potential errors like the background script not being ready
         updatePopupContent('Error: Could not connect to the extension.');
@@ -72,10 +82,10 @@ function handleSelection(event) {
       }
 
       if (response.status === 'success') {
-        const content = formatData(response.data);
+        const content = isSentence ? formatTranslationData(response.data) : formatData(response.data);
         updatePopupContent(content);
       } else {
-        updatePopupContent(`Error: ${response.message || 'Definition not found.'}`);
+        updatePopupContent(`Error: ${response.message || (isSentence ? 'Translation failed.' : 'Definition not found.')}`);
       }
     });
   });
@@ -145,10 +155,73 @@ function formatData(data) {
   return headerHTML + `<div class="qdp-body">${definitionsHTML}</div>`;
 }
 
+// Format translation data for sentences
+function formatTranslationData(data) {
+  let html = `
+    <div class="qdp-sentence-header">
+      <div class="qdp-sentence-original">
+        <span class="qdp-sentence-label">Original:</span>
+        <div class="qdp-sentence-text">"${data.originalSentence}"</div>
+      </div>
+      <div class="qdp-sentence-translation">
+        <span class="qdp-sentence-label">Translation (${data.targetLanguage}):</span>
+        <div class="qdp-sentence-text">"${data.translation}"</div>
+      </div>
+    </div>
+  `;
+
+  // Add context if available
+  if (data.context) {
+    html += `
+      <div class="qdp-sentence-context">
+        <span class="qdp-sentence-context-label">Context:</span>
+        <div class="qdp-sentence-context-text">${data.context}</div>
+      </div>
+    `;
+  }
+
+  // Add literal translation if available and different
+  if (data.literalTranslation && data.literalTranslation !== data.translation) {
+    html += `
+      <div class="qdp-sentence-literal">
+        <span class="qdp-sentence-literal-label">Literal:</span>
+        <div class="qdp-sentence-literal-text">"${data.literalTranslation}"</div>
+      </div>
+    `;
+  }
+
+  // Add key phrases if available
+  if (data.keyPhrases && data.keyPhrases.length > 0) {
+    const keyPhrasesHTML = data.keyPhrases.map(phrase => `
+      <div class="qdp-key-phrase">
+        <span class="qdp-key-phrase-original">"${phrase.original}"</span>
+        <span class="qdp-key-phrase-arrow">→</span>
+        <span class="qdp-key-phrase-translation">"${phrase.translation}"</span>
+        ${phrase.explanation ? `<div class="qdp-key-phrase-explanation">${phrase.explanation}</div>` : ''}
+      </div>
+    `).join('');
+
+    html += `
+      <div class="qdp-key-phrases">
+        <span class="qdp-key-phrases-label">Key Phrases:</span>
+        <div class="qdp-key-phrases-list">${keyPhrasesHTML}</div>
+      </div>
+    `;
+  }
+
+  return html;
+}
+
 // Create and display the popup on the page
-function createPopup(x, y, content) {
+function createPopup(x, y, content, isSentence = false) {
   popup = document.createElement('div');
   popup.id = 'quick-def-popup';
+  
+  // Add sentence class for larger width
+  if (isSentence) {
+    popup.classList.add('qdp-sentence-mode');
+  }
+  
   popup.style.left = `${x + window.scrollX}px`;
   popup.style.top = `${y + window.scrollY + 15}px`; // Position below the cursor
   popup.innerHTML = content;

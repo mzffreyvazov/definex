@@ -178,4 +178,47 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     return true;
   }
+  
+  if (message.type === 'translateSentence') {
+    const sentence = message.text;
+
+    chrome.storage.local.get(['targetLanguage'], (settings) => {
+      const targetLanguage = settings.targetLanguage || 'Spanish'; // Default to Spanish
+      // Use a more robust encoding method that handles Unicode characters
+      const encodedSentence = encodeURIComponent(sentence).replace(/[!'()*]/g, function(c) {
+        return '%' + c.charCodeAt(0).toString(16);
+      });
+      const cacheKey = `qdp_sentence_${encodedSentence}_${targetLanguage}`;
+
+      chrome.storage.local.get(cacheKey, (result) => {
+        if (result[cacheKey]) {
+          console.log(`Found sentence translation in cache.`);
+          sendResponse({ status: 'success', data: result[cacheKey] });
+          return;
+        }
+
+        console.log(`Translating sentence: "${sentence}"`);
+        const encodedSentence = encodeURIComponent(sentence);
+        const langParam = `?lang=${encodeURIComponent(targetLanguage)}`;
+        const translateUrl = `http://localhost:3000/api/translate/${encodedSentence}${langParam}`;
+
+        fetch(translateUrl)
+          .then(res => res.json())
+          .then(data => {
+            if (data.error) {
+              throw new Error(data.error);
+            }
+            
+            chrome.storage.local.set({ [cacheKey]: data });
+            sendResponse({ status: 'success', data: data });
+          })
+          .catch(error => {
+            console.error(`Translation Error for sentence:`, error);
+            sendResponse({ status: 'error', message: error.message });
+          });
+      });
+    });
+
+    return true;
+  }
 });

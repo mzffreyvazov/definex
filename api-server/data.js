@@ -207,4 +207,83 @@ app.get("/api/dictionary/:language/:entry", (req, res, next) => {
     }
   });
 });
+// --- ADD THIS ENTIRE BLOCK TO data.js ---
+
+// Load environment variables from .env file
+require('dotenv').config();
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+
+// Make sure to handle the case where the API key is missing
+if (!process.env.GEMINI_API_KEY) {
+  throw new Error("GEMINI_API_KEY is not set in the .env file.");
+}
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
+// Function to build the prompt for the AI
+function getGeminiPrompt(word) {
+  return `
+    You are a helpful linguistic expert API. Your task is to provide a detailed definition for the word: "${word}".
+
+    You MUST respond with ONLY a valid JSON object. Do not include any introductory text, explanations, or markdown formatting like \`\`\`json.
+
+    The JSON object must follow this exact structure:
+    {
+      "word": "the original word",
+      "pronunciation": "/ipa_pronunciation/",
+      "forms": [
+        {
+          "partOfSpeech": "part of speech (e.g., verb, noun)",
+          "definitions": [
+            {
+              "definition": "The clear and concise definition text.",
+              "examples": [
+                "Example sentence 1.",
+                "Example sentence 2.",
+                "Example sentence 3.",
+                "Example sentence 4.",
+                "Example sentence 5."
+              ]
+            }
+          ]
+        }
+      ]
+    }
+
+    - Provide all common parts of speech for the word.
+    - For each part of speech, provide at least one common definition.
+    - For each definition, provide exactly 5 distinct example sentences.
+    - If the word is nonsensical or cannot be defined, return this exact JSON object: {"error": "Word not found"}
+  `;
+}
+
+app.get("/api/gemini/:entry", async (req, res) => {
+  try {
+    const word = req.params.entry;
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+    const prompt = getGeminiPrompt(word);
+
+    const result = await model.generateContent(prompt);
+    let responseText = result.response.text();
+
+    // --- FIX: Clean the AI's response before parsing ---
+    // This regular expression finds a JSON object that might be wrapped in ```json ... ```
+    const jsonMatch = responseText.match(/```(json)?([\s\S]*?)```/);
+    if (jsonMatch && jsonMatch[2]) {
+      // If we find a match, use the content inside the backticks
+      responseText = jsonMatch[2].trim();
+    }
+    // --- END FIX ---
+
+    // Now, parse the cleaned string
+    const jsonResponse = JSON.parse(responseText);
+
+    res.status(200).json(jsonResponse);
+  } catch (error) {
+    // Add more detail to the error log
+    console.error("Error processing Gemini API response:", error);
+    console.error("Original AI response text:", result.response.text()); // Log the problematic text
+    res.status(500).json({ error: "Failed to parse a valid JSON response from the AI." });
+  }
+});
+
 module.exports = app;

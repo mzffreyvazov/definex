@@ -265,11 +265,11 @@
   line-height: 1.4;
 }
 
-/* .qdp-key-phrases {
-  margin-top: 16px;
-  border-top: 1px dashed #ddd;
-  padding-top: 16px;
-} */
+.qdp-key-phrases {
+  margin-top: 20px !important;
+  padding-top: 16px !important;
+  border-top: 1px solid #e9ecef !important;
+}
 
 .qdp-key-phrases-label {
   font-size: 12px;
@@ -315,7 +315,6 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  margin-top: 0;
   transition: all 0.3s ease-in-out;
 }
 
@@ -329,6 +328,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
+  margin-bottom: 8px;
 }
 
 .qdp-key-phrase-original {

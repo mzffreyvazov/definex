@@ -180,16 +180,6 @@ function formatTranslationData(data) {
     `;
   }
 
-  // Add literal translation if available and different
-  if (data.literalTranslation && data.literalTranslation !== data.translation) {
-    html += `
-      <div class="qdp-sentence-literal">
-        <span class="qdp-sentence-literal-label">Literal:</span>
-        <div class="qdp-sentence-literal-text">"${data.literalTranslation}"</div>
-      </div>
-    `;
-  }
-
   // Add key phrases if available
   if (data.keyPhrases && data.keyPhrases.length > 0) {
     const keyPhrasesHTML = data.keyPhrases.map(phrase => `

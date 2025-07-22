@@ -248,32 +248,6 @@
   line-height: 1.4;
 }
 
-.qdp-sentence-literal {
-  background-color: #f8f9fa;
-  border: 1px solid #dee2e6;
-  border-left: 4px solid #6c757d;
-  padding: 12px;
-  border-radius: 6px;
-  margin: 12px 0;
-}
-
-.qdp-sentence-literal-label {
-  font-size: 11px;
-  font-weight: 700;
-  color: #6c757d;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  display: block;
-  margin-bottom: 6px;
-}
-
-.qdp-sentence-literal-text {
-  font-size: 14px;
-  color: #495057;
-  line-height: 1.4;
-  font-style: italic;
-}
-
 .qdp-key-phrases {
   margin-top: 16px;
   border-top: 1px dashed #ddd;

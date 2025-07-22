@@ -343,37 +343,33 @@ app.get("/api/translate/:sentence", async (req, res) => {
     
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
     
-    const prompt = `
-      You are a professional translator. Your task is to translate the following sentence to ${targetLanguage} and provide contextual information.
+  const prompt = `
+    You are a professional translator. Your task is to translate the following sentence to ${targetLanguage} and provide contextual information.
 
-      You MUST respond with ONLY a valid JSON object. Do not include any introductory text, explanations, or markdown formatting like \`\`\`json.
+    You MUST respond with ONLY a valid JSON object. Do not include any introductory text, explanations, or markdown formatting like \`\`\`json.
 
-      The JSON object must follow this exact structure:
-      {
-        "originalSentence": "the original sentence",
-        "translation": "the sentence translated to ${targetLanguage}",
-        "targetLanguage": "${targetLanguage}",
-        "context": "brief explanation of the meaning or context if needed",
-        "literalTranslation": "word-for-word translation if significantly different from natural translation",
-        "keyPhrases": [
-          {
-            "original": "key phrase from original",
-            "translation": "translation of this phrase",
-            "explanation": "brief explanation if needed"
-          }
-        ]
-      }
+    The JSON object must follow this exact structure:
+    {
+      "originalSentence": "the original sentence",
+      "translation": "the sentence translated to ${targetLanguage}",
+      "targetLanguage": "${targetLanguage}",
+      "context": "brief explanation of the meaning or context if needed",
+      "keyPhrases": [
+        {
+          "original": "key phrase from original",
+          "translation": "translation of this phrase",
+          "explanation": "brief explanation if needed"
+        }
+      ]
+    }
 
-      Sentence to translate: "${sentence}"
+    Sentence to translate: "${sentence}"
 
-      - Provide a natural, fluent translation that preserves the original meaning
-      - Include context only if the sentence has cultural references, idioms, or ambiguous meanings
-      - Include literalTranslation only if it differs significantly from the natural translation
-      - Include keyPhrases for important phrases, idioms, or terms that might be difficult to understand
-      - If the sentence cannot be translated meaningfully, return: {"error": "Unable to translate sentence"}
-    `;
-
-    const result = await model.generateContent(prompt);
+    - Provide a natural, fluent translation that preserves the original meaning
+    - Include context only if the sentence has cultural references, idioms, or ambiguous meanings
+    - Include keyPhrases for important phrases, idioms, or terms that might be difficult to understand
+    - If the sentence cannot be translated meaningfully, return: {"error": "Unable to translate sentence"}
+  `;    const result = await model.generateContent(prompt);
     let responseText = result.response.text();
 
     // Clean the AI's response before parsing

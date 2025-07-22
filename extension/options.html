@@ -20,20 +20,50 @@
             align-items: center;
             justify-content: center;
             padding: 20px;
+            margin: 0;
         }
         
         .container {
             background: white;
             border-radius: 12px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-            padding: 40px;
             width: 100%;
             max-width: 500px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
         
         .header {
             text-align: center;
-            margin-bottom: 30px;
+            padding: 30px 40px 20px 40px;
+            border-bottom: 1px solid #f0f0f0;
+            flex-shrink: 0;
+        }
+        
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 40px 30px 40px;
+        }
+        
+        .content::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .content::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+        
+        .content::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 3px;
+        }
+        
+        .content::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
         }
         
         .header h1 {
@@ -204,6 +234,30 @@
             opacity: 1;
         }
         
+        .section-header {
+            margin: 30px 0 20px 0;
+            text-align: left;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 8px;
+        }
+        
+        .section-header h2 {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin: 0 0 4px 0;
+        }
+        
+        .section-header p {
+            font-size: 13px;
+            color: #666;
+            margin: 0;
+        }
+        
+        .section-header:first-child {
+            margin-top: 0;
+        }
+        
         .source-description {
             font-size: 12px;
             color: #666;
@@ -222,94 +276,97 @@
             <h1>LexiLens</h1>
             <p>Configure your dictionary preferences</p>
         </div>
-
-        <!-- SOURCE OPTIONS -->
-        <div class="form-group">
-            <label for="source">Dictionary Source:</label>
-            <div class="select-wrapper">
-                <select id="source">
-                    <option value="cambridge">Cambridge Dictionary</option>
-                    <option value="merriam-webster">Merriam-Webster</option>
-                    <option value="gemini">Gemini AI</option>
-                </select>
+        
+        <div class="content">
+            <!-- DICTIONARY SOURCE SECTION -->
+            <div class="section-header">
+                <h2>Dictionary Source</h2>
             </div>
-            <div id="source-description" class="source-description"></div>
-        </div>
-
-        <div class="form-group">
-            <div id="mw-api-section" class="api-key-section hidden">
-                <label for="mw-key">Merriam-Webster API Key:</label>
-                <input type="text" id="mw-key" placeholder="Enter your API key here">
-                <div class="api-help">
-                    Get your free API key from <a href="https://dictionaryapi.com/" target="_blank">dictionaryapi.com</a>.
+            
+            <div class="form-group">
+                <label for="source">Choose your preferred dictionary:</label>
+                <div class="select-wrapper">
+                    <select id="source">
+                        <option value="cambridge">Cambridge Dictionary</option>
+                        <option value="merriam-webster">Merriam-Webster</option>
+                        <option value="gemini">Gemini AI</option>
+                    </select>
                 </div>
-            </div>
-        </div>
-
-        <!-- SEPARATOR -->
-        <hr style="border: none; border-top: 1px solid #e9ecef; margin: 30px 0;">
-
-        <!-- TRANSLATION OPTIONS (Initially hidden) -->
-        <div id="translation-section" class="hidden">
-            <div class="header" style="margin-bottom: 20px; text-align: left;">
-                <h2 style="font-size: 20px; font-weight: 600;">Translation Options</h2>
-                <p style="font-size: 13px; color: #666;">Only available for the Gemini AI source.</p>
+                <div id="source-description" class="source-description"></div>
             </div>
 
             <div class="form-group">
-                <label for="target-language">Translate to:</label>
+                <div id="mw-api-section" class="api-key-section hidden">
+                    <label for="mw-key">Merriam-Webster API Key:</label>
+                    <input type="text" id="mw-key" placeholder="Enter your API key here">
+                    <div class="api-help">
+                        Get your free API key from <a href="https://dictionaryapi.com/" target="_blank">dictionaryapi.com</a>.
+                    </div>
+                </div>
+            </div>
+
+            <!-- TRANSLATION OPTIONS SECTION -->
+            <div id="translation-section" class="hidden">
+                <div class="section-header">
+                    <h2>Translation Options</h2>
+                    <p>Only available for the Gemini AI source.</p>
+                </div>
+
+                <div class="form-group">
+                    <label for="target-language">Translate to:</label>
+                    <div class="select-wrapper">
+                        <select id="target-language">
+                            <option value="none">No Translation (Default)</option>
+                            <option value="Spanish">Spanish</option>
+                            <option value="French">French</option>
+                            <option value="German">German</option>
+                            <option value="Italian">Italian</option>
+                            <option value="Portuguese">Portuguese</option>
+                            <option value="Russian">Russian</option>
+                            <option value="Turkish">Turkish</option>
+                            <option value="Azerbaijani">Azerbaijani</option>
+                            <option value="Japanese">Japanese</option>
+                            <option value="Chinese (Simplified)">Chinese (Simplified)</option>
+                            <option value="Korean">Korean</option>
+                            <option value="Arabic">Arabic</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DISPLAY OPTIONS SECTION -->
+            <div class="section-header">
+                <h2>Display Options</h2>
+            </div>
+
+            <div class="form-group">
+                <label for="definition-scope">Definition Scope:</label>
                 <div class="select-wrapper">
-                    <select id="target-language">
-                        <option value="none">No Translation (Default)</option>
-                        <option value="Spanish">Spanish</option>
-                        <option value="French">French</option>
-                        <option value="German">German</option>
-                        <option value="Italian">Italian</option>
-                        <option value="Portuguese">Portuguese</option>
-                        <option value="Russian">Russian</option>
-                        <option value="Turkish">Turkish</option>
-                        <option value="Azerbaijani">Azerbaijani</option>
-                        <option value="Japanese">Japanese</option>
-                        <option value="Chinese (Simplified)">Chinese (Simplified)</option>
-                        <option value="Korean">Korean</option>
-                        <option value="Arabic">Arabic</option>
+                    <select id="definition-scope">
+                        <option value="relevant">Show only the most relevant definition</option>
+                        <option value="all">Show definitions for all parts of speech</option>
                     </select>
                 </div>
             </div>
-        </div>
 
-        <!-- DISPLAY OPTIONS -->
-        <div class="header" style="margin-bottom: 20px; text-align: left;">
-            <h2 style="font-size: 20px; font-weight: 600;">Display Options</h2>
-        </div>
-
-        <div class="form-group">
-            <label for="definition-scope">Definition Scope:</label>
-            <div class="select-wrapper">
-                <select id="definition-scope">
-                    <option value="relevant">Show only the most relevant definition</option>
-                    <option value="all">Show definitions for all parts of speech</option>
-                </select>
+            <div class="form-group">
+                <label for="example-count">Number of Example Sentences (per definition):</label>
+                <div class="select-wrapper">
+                    <select id="example-count">
+                        <option value="0">0</option>
+                        <option value="1">1 (Default)</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                    </select>
+                </div>
             </div>
-        </div>
 
-        <div class="form-group">
-            <label for="example-count">Number of Example Sentences (per definition):</label>
-            <div class="select-wrapper">
-                <select id="example-count">
-                    <option value="0">0</option>
-                    <option value="1">1 (Default)</option>
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-                    <option value="4">4</option>
-                    <option value="5">5</option>
-                </select>
+            <div class="button-group">
+                <button id="save">Save Settings</button>
+                <div id="status"></div>
             </div>
-        </div>
-
-        <div class="button-group">
-            <button id="save">Save Settings</button>
-            <div id="status"></div>
         </div>
     </div>
     <script src="options.js"></script>

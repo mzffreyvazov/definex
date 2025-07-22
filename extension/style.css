@@ -1,3 +1,6 @@
+/* Import Google Font - Open Sans */
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap');
+
 #quick-def-popup {
   position: absolute;
   z-index: 99999999;
@@ -7,7 +10,7 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   padding: 16px;
   max-width: 350px;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 14px;
   line-height: 1.5;
   color: #333;

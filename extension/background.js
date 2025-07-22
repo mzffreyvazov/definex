@@ -104,24 +104,41 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (source === 'gemini') {
           const encodedWord = encodeURIComponent(word);
           const geminiUrl = `http://localhost:3000/api/gemini/${encodedWord}`;
-          const cambridgeUrl = `http://localhost:3000/api/dictionary/en/${encodedWord}`;
-          apiPromise = Promise.all([
-            fetch(geminiUrl).then(res => res.json()),
-            fetch(cambridgeUrl).then(res => res.json().catch(() => null)) // Prevent crash if Cambridge fails
-          ]).then(([geminiData, cambridgeData]) => {
-            const normalizedGemini = normalizeGeminiData(geminiData);
-            if (!normalizedGemini) throw new Error('Gemini AI definition not found or invalid format.');
-            if (cambridgeData && cambridgeData.pronunciation && cambridgeData.pronunciation.length > 0) {
-              const cambridgePron = cambridgeData.pronunciation.find(p => p.url) || cambridgeData.pronunciation[0];
-              if (cambridgePron) {
-                normalizedGemini.pronunciation[0].url = cambridgePron.url || '';
-                if (!normalizedGemini.pronunciation[0].pron && cambridgePron.pron) {
-                  normalizedGemini.pronunciation[0].pron = cambridgePron.pron;
+          
+          // Check if it's a single word or phrase
+          const words = word.split(/\s+/).filter(w => w.length > 0);
+          const isPhrase = words.length > 1;
+          
+          if (isPhrase) {
+            // For phrases, only fetch from Gemini (no Cambridge audio)
+            apiPromise = fetch(geminiUrl)
+              .then(res => res.json())
+              .then(geminiData => {
+                const normalizedGemini = normalizeGeminiData(geminiData);
+                if (!normalizedGemini) throw new Error('Gemini AI definition not found or invalid format.');
+                return normalizedGemini;
+              });
+          } else {
+            // For single words, fetch from both Gemini and Cambridge for audio
+            const cambridgeUrl = `http://localhost:3000/api/dictionary/en/${encodedWord}`;
+            apiPromise = Promise.all([
+              fetch(geminiUrl).then(res => res.json()),
+              fetch(cambridgeUrl).then(res => res.json().catch(() => null)) // Prevent crash if Cambridge fails
+            ]).then(([geminiData, cambridgeData]) => {
+              const normalizedGemini = normalizeGeminiData(geminiData);
+              if (!normalizedGemini) throw new Error('Gemini AI definition not found or invalid format.');
+              if (cambridgeData && cambridgeData.pronunciation && cambridgeData.pronunciation.length > 0) {
+                const cambridgePron = cambridgeData.pronunciation.find(p => p.url) || cambridgeData.pronunciation[0];
+                if (cambridgePron) {
+                  normalizedGemini.pronunciation[0].url = cambridgePron.url || '';
+                  if (!normalizedGemini.pronunciation[0].pron && cambridgePron.pron) {
+                    normalizedGemini.pronunciation[0].pron = cambridgePron.pron;
+                  }
                 }
               }
-            }
-            return normalizedGemini;
-          });
+              return normalizedGemini;
+            });
+          }
         } else if (source === 'merriam-webster') {
           if (!mwApiKey) {
             sendResponse({ status: 'error', message: 'Merriam-Webster API key is not set.' });

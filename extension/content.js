@@ -47,7 +47,15 @@ function handleSelection(event) {
     
     let loadingMessage;
     if (source === 'gemini') {
-      loadingMessage = `<span style="font-family: 'Open Sans', sans-serif;">Loading definition for "<strong>${selectedText}</strong>" from <em>${sourceDisplayName}</em> with audio from <em>Cambridge</em>...</span>`;
+      // Check if it's a single word or phrase for loading message
+      const words = selectedText.split(/\s+/).filter(word => word.length > 0);
+      const isPhrase = words.length > 1;
+      
+      if (isPhrase) {
+        loadingMessage = `<span style="font-family: 'Open Sans', sans-serif;">Loading definition for "<strong>${selectedText}</strong>" from <em>${sourceDisplayName}</em>...</span>`;
+      } else {
+        loadingMessage = `<span style="font-family: 'Open Sans', sans-serif;">Loading definition for "<strong>${selectedText}</strong>" from <em>${sourceDisplayName}</em> with audio from <em>Cambridge</em>...</span>`;
+      }
     } else {
       loadingMessage = `<span style="font-family: 'Open Sans', sans-serif;">Loading definition for "<strong>${selectedText}</strong>" from <em>${sourceDisplayName}</em>...</span>`;
     }

@@ -64,3 +64,11 @@
   border-left: 3px solid #007acc;
   padding-left: 10px;
 }
+/* Add this to your style.css file */
+
+.qdp-pos {
+  font-weight: bold;
+  font-style: italic;
+  color: #005a9c; /* A nice, distinct blue color */
+  margin-right: 6px;
+}

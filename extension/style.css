@@ -170,11 +170,11 @@
 .qdp-example {
   color: #666;
   font-style: italic;
-  border-left: 3px solid #007acc;
+  border-left: 4px solid #007acc;
   padding: 8px 12px;
   margin: 8px 0;
   background-color: #f8fbff;
-  border-radius: 4px;
+  border-radius: 6px;
   font-size: 13px;
   line-height: 1.4;
 }

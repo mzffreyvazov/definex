@@ -17,7 +17,7 @@ function save_options() {
 }
 
 // Restores select box and input field state using the preferences
-// stored in chrome.storage.
+// stored in chrome.st  orage.
 function restore_options() {
   // Use default value source = 'cambridge' and mwApiKey = ''
   chrome.storage.local.get({

@@ -1,5 +1,19 @@
 let popup = null;
 
+// Helper function to get display name for source
+function getSourceDisplayName(source) {
+  switch (source) {
+    case 'cambridge':
+      return 'Cambridge Dictionary';
+    case 'merriam-webster':
+      return 'Merriam-Webster';
+    case 'gemini':
+      return 'Gemini AI';
+    default:
+      return 'Cambridge Dictionary';
+  }
+}
+
 // Listen for double-clicks on the page
 document.addEventListener('dblclick', handleSelection);
 
@@ -10,8 +24,14 @@ function handleSelection(event) {
     // Remove existing popup if it exists
     removePopup();
     
-    // Create a placeholder popup while fetching
-    createPopup(event.clientX, event.clientY, `<span>Loading definition for "<strong>${selectedText}</strong>"...</span>`);
+    // Get the current source setting to show in loading message
+    chrome.storage.local.get(['preferredSource'], (settings) => {
+      const source = settings.preferredSource || 'cambridge';
+      const sourceDisplayName = getSourceDisplayName(source);
+      
+      // Create a placeholder popup while fetching
+      createPopup(event.clientX, event.clientY, `<span>Loading definition for "<strong>${selectedText}</strong>" from <em>${sourceDisplayName}</em>...</span>`);
+    });
     
     // Send the selected word to the background script
     chrome.runtime.sendMessage({ type: 'getDefinition', word: selectedText }, (response) => {

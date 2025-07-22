@@ -57,6 +57,28 @@
   background-color: #f0f0f0;
 }
 
+/* TTS Button Styles */
+#qdp-tts-phrase-btn, #qdp-tts-original-btn, .qdp-tts-example-btn {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 2px 5px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+  margin-left: 5px;
+}
+
+#qdp-tts-phrase-btn:hover, #qdp-tts-original-btn:hover, .qdp-tts-example-btn:hover {
+  background-color: #e8f4fd;
+  transform: scale(1.1);
+}
+
+.qdp-tts-example-btn {
+  font-size: 14px;
+  vertical-align: middle;
+}
+
 /* Translation header styles */
 .qdp-translation-header {
   display: flex;

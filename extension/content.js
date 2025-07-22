@@ -1,5 +1,25 @@
 let popup = null;
 
+// Audio cache for TTS
+const audioCache = new Map();
+const MAX_CACHE_SIZE = 50; // Limit cache to 50 audio files
+
+// Function to clean up cache when it gets too large
+function cleanupAudioCache() {
+  if (audioCache.size >= MAX_CACHE_SIZE) {
+    // Remove the oldest entries (first 10)
+    const keysToDelete = Array.from(audioCache.keys()).slice(0, 10);
+    keysToDelete.forEach(key => {
+      const audio = audioCache.get(key);
+      if (audio) {
+        audio.src = ''; // Release audio resource
+      }
+      audioCache.delete(key);
+    });
+    console.log(`Cleaned up ${keysToDelete.length} cached audio files`);
+  }
+}
+
 // Helper function to get display name for source
 function getSourceDisplayName(source) {
   switch (source) {
@@ -98,12 +118,17 @@ function formatData(data) {
   const pronunciation = data.pronunciation.find(p => p.lang === 'us' && p.pron) || data.pronunciation.find(p => p.pron);
   const audioUrl = pronunciation ? pronunciation.url : null;
 
+  // Check if this is a phrase (more than one word)
+  const words = word.split(/\s+/).filter(w => w.length > 0);
+  const isPhrase = words.length > 1;
+
   // Start with the header, including translation if available
   let headerHTML = `
     <div class="qdp-header">
       <span class="qdp-word">${word}</span>
       <span class="qdp-pron">${pronunciation ? pronunciation.pron : ''}</span>
       ${audioUrl ? `<button id="qdp-audio-btn" title="Play pronunciation" data-audio-src="${audioUrl}">🔊</button>` : ''}
+      ${isPhrase ? `<button id="qdp-tts-phrase-btn" title="Play phrase with TTS" data-tts-text="${word}">🎵</button>` : ''}
     </div>
   `;
 
@@ -121,7 +146,17 @@ function formatData(data) {
   const definitionsHTML = data.definition.map(def => {
     // Generate HTML for each example within this definition
     const examplesHTML = def.example.map(ex => {
+      // Check if example is a phrase/sentence for TTS
+      const exampleWords = ex.text.split(/\s+/).filter(w => w.length > 0);
+      const isExamplePhrase = exampleWords.length > 1;
+      
       let exampleHTML = `<div class="qdp-example">e.g., "<em>${ex.text}</em>"`;
+      
+      // Add TTS button for phrases/sentences
+      if (isExamplePhrase) {
+        exampleHTML += ` <button class="qdp-tts-example-btn" title="Play example with TTS" data-tts-text="${ex.text}">🎵</button>`;
+      }
+      
       // Add translation if available
       if (ex.translation) {
         exampleHTML += `<div class="qdp-example-translation"> <em>${ex.translation}</em></div>`;
@@ -161,7 +196,9 @@ function formatTranslationData(data) {
     <div class="qdp-sentence-header">
       <div class="qdp-sentence-original">
         <span class="qdp-sentence-label">Original:</span>
-        <div class="qdp-sentence-text">"${data.originalSentence}"</div>
+        <div class="qdp-sentence-text">"${data.originalSentence}"
+          <button id="qdp-tts-original-btn" title="Play original sentence" data-tts-text="${data.originalSentence}">🔊</button>
+        </div>
       </div>
       <div class="qdp-sentence-translation">
         <span class="qdp-sentence-label">Translation (${data.targetLanguage}):</span>
@@ -222,6 +259,17 @@ function createPopup(x, y, content, isSentence = false) {
   if(audioButton) {
       audioButton.addEventListener('click', playAudio);
   }
+  
+  // Add TTS event listeners
+  const ttsPhraseBtns = document.querySelectorAll('#qdp-tts-phrase-btn, #qdp-tts-original-btn');
+  ttsPhraseBtns.forEach(btn => {
+    btn.addEventListener('click', playTTS);
+  });
+  
+  const ttsExampleBtns = document.querySelectorAll('.qdp-tts-example-btn');
+  ttsExampleBtns.forEach(btn => {
+    btn.addEventListener('click', playTTS);
+  });
 }
 
 // Update the content of the existing popup
@@ -232,6 +280,17 @@ function updatePopupContent(content) {
     if(audioButton) {
         audioButton.addEventListener('click', playAudio);
     }
+    
+    // Add TTS event listeners
+    const ttsPhraseBtns = document.querySelectorAll('#qdp-tts-phrase-btn, #qdp-tts-original-btn');
+    ttsPhraseBtns.forEach(btn => {
+      btn.addEventListener('click', playTTS);
+    });
+    
+    const ttsExampleBtns = document.querySelectorAll('.qdp-tts-example-btn');
+    ttsExampleBtns.forEach(btn => {
+      btn.addEventListener('click', playTTS);
+    });
   }
 }
 
@@ -240,6 +299,54 @@ function playAudio(event) {
     if (audioSrc) {
         const audio = new Audio(audioSrc);
         audio.play();
+    }
+}
+
+function playTTS(event) {
+    const text = event.target.getAttribute('data-tts-text');
+    if (text) {
+        // Check word count to ensure it's a phrase or sentence
+        const words = text.trim().split(/\s+/).filter(w => w.length > 0);
+        if (words.length < 2) {
+            console.log('TTS is only available for phrases (2+ words), not individual words.');
+            return;
+        }
+        
+        console.log(`Playing TTS for: "${text}"`);
+        
+        // Check if audio is already cached
+        const cacheKey = text.toLowerCase().trim();
+        if (audioCache.has(cacheKey)) {
+            console.log('Playing cached audio');
+            const cachedAudio = audioCache.get(cacheKey);
+            cachedAudio.currentTime = 0; // Reset to beginning
+            cachedAudio.play().catch(error => {
+                console.error('Cached TTS playback failed:', error);
+            });
+            return;
+        }
+        
+        // Create TTS audio URL
+        const encodedText = encodeURIComponent(text);
+        const ttsUrl = `http://localhost:3000/api/tts/${encodedText}`;
+        
+        console.log(`TTS URL: ${ttsUrl}`);
+        console.log('Fetching new audio and caching it');
+        
+        // Create and cache audio
+        const audio = new Audio(ttsUrl);
+        
+        // Cache the audio once it's loaded
+        audio.addEventListener('canplaythrough', () => {
+            cleanupAudioCache(); // Check cache size before adding
+            audioCache.set(cacheKey, audio);
+            console.log(`Audio cached for: "${text}" (Cache size: ${audioCache.size})`);
+        });
+        
+        // Play the audio
+        audio.play().catch(error => {
+            console.error('TTS playback failed:', error);
+        });
     }
 }
 

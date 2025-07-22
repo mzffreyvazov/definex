@@ -40,6 +40,7 @@ const fetchVerbs = (wiki) => {
 };
 
 app.use(cors({ origin: "*" }));
+app.use(express.json()); // Add JSON body parser middleware
 
 app.get("/", (req, res) => {
   res.sendFile(__dirname + "/index.html");
@@ -384,6 +385,184 @@ app.get("/api/translate/:sentence", async (req, res) => {
   } catch (error) {
     console.error("Error processing sentence translation:", error);
     res.status(500).json({ error: "Failed to translate sentence." });
+  }
+});
+
+// Text-to-Speech endpoint for phrases and sentences using Eleven Labs
+app.get("/api/tts/:text", async (req, res) => {
+  try {
+    const text = decodeURIComponent(req.params.text);
+    const words = text.trim().split(/\s+/);
+    const wordCount = words.length;
+    
+    console.log(`[TTS GET] Request received for text: "${text}"`);
+    console.log(`[TTS GET] Word count: ${wordCount}`);
+    
+    // Only allow phrases (2-5 words) and sentences (6+ words)
+    if (wordCount < 2) {
+      console.log(`[TTS GET] Request rejected - only ${wordCount} word(s)`);
+      return res.status(400).json({ 
+        error: "Text-to-speech is only available for phrases (2-5 words) and sentences (6+ words), not individual words." 
+      });
+    }
+    
+    if (!process.env.ELEVENLABS_API_KEY) {
+      console.log(`[TTS GET] Error - ELEVENLABS_API_KEY not found in environment`);
+      return res.status(500).json({ error: "ELEVENLABS_API_KEY is not set in the .env file." });
+    }
+    
+    // Eleven Labs API configuration
+    const voiceId = "JBFqnCBsd6RMkjVDRZzb"; // Default voice ID
+    const apiUrl = `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=mp3_44100_128`;
+    
+    const requestBody = {
+      text: text,
+      model_id: "eleven_multilingual_v2"
+    };
+    
+    console.log(`[TTS GET] Making request to Eleven Labs API`);
+    console.log(`[TTS GET] API URL: ${apiUrl}`);
+    console.log(`[TTS GET] Request body:`, requestBody);
+    console.log(`[TTS GET] API Key present: ${process.env.ELEVENLABS_API_KEY ? 'Yes' : 'No'}`);
+    
+    // Make request to Eleven Labs API
+    const response = await axios.post(apiUrl, requestBody, {
+      headers: {
+        'xi-api-key': process.env.ELEVENLABS_API_KEY,
+        'Content-Type': 'application/json'
+      },
+      responseType: 'arraybuffer' // Important: Get binary data
+    });
+    
+    console.log(`[TTS GET] Eleven Labs API response status: ${response.status}`);
+    console.log(`[TTS GET] Audio data size: ${response.data.length} bytes`);
+    
+    // Set appropriate headers for audio response
+    res.set({
+      'Content-Type': 'audio/mpeg',
+      'Content-Disposition': 'attachment; filename="speech.mp3"',
+      'Content-Length': response.data.length
+    });
+    
+    // Send the audio data
+    res.send(response.data);
+    
+    console.log(`[TTS GET] Audio successfully sent to client`);
+    
+  } catch (error) {
+    console.error("[TTS GET] Error generating text-to-speech:", error.message);
+    
+    // Handle specific Eleven Labs API errors
+    if (error.response) {
+      const status = error.response.status;
+      console.error(`[TTS GET] Eleven Labs API error - Status: ${status}`);
+      console.error(`[TTS GET] Error response:`, error.response.data);
+      
+      if (status === 401) {
+        return res.status(401).json({ error: "Invalid Eleven Labs API key." });
+      } else if (status === 429) {
+        return res.status(429).json({ error: "Rate limit exceeded. Please try again later." });
+      } else if (status === 422) {
+        return res.status(422).json({ error: "Invalid request parameters." });
+      }
+    } else if (error.request) {
+      console.error(`[TTS GET] Network error - no response received:`, error.request);
+    } else {
+      console.error(`[TTS GET] Request setup error:`, error.message);
+    }
+    
+    res.status(500).json({ error: "Failed to generate text-to-speech audio." });
+  }
+});
+
+// Text-to-Speech with custom voice endpoint
+app.post("/api/tts", async (req, res) => {
+  try {
+    const { text, voiceId = "JBFqnCBsd6RMkjVDRZzb", modelId = "eleven_multilingual_v2" } = req.body;
+    
+    console.log(`[TTS POST] Request received for text: "${text}"`);
+    console.log(`[TTS POST] Voice ID: ${voiceId}, Model ID: ${modelId}`);
+    
+    if (!text) {
+      console.log(`[TTS POST] Request rejected - no text provided`);
+      return res.status(400).json({ error: "Text is required." });
+    }
+    
+    const words = text.trim().split(/\s+/);
+    const wordCount = words.length;
+    
+    console.log(`[TTS POST] Word count: ${wordCount}`);
+    
+    // Only allow phrases (2-5 words) and sentences (6+ words)
+    if (wordCount < 2) {
+      console.log(`[TTS POST] Request rejected - only ${wordCount} word(s)`);
+      return res.status(400).json({ 
+        error: "Text-to-speech is only available for phrases (2-5 words) and sentences (6+ words), not individual words." 
+      });
+    }
+    
+    if (!process.env.ELEVENLABS_API_KEY) {
+      console.log(`[TTS POST] Error - ELEVENLABS_API_KEY not found in environment`);
+      return res.status(500).json({ error: "ELEVENLABS_API_KEY is not set in the .env file." });
+    }
+    
+    const apiUrl = `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=mp3_44100_128`;
+    
+    const requestBody = {
+      text: text,
+      model_id: modelId
+    };
+    
+    console.log(`[TTS POST] Making request to Eleven Labs API`);
+    console.log(`[TTS POST] API URL: ${apiUrl}`);
+    console.log(`[TTS POST] Request body:`, requestBody);
+    
+    // Make request to Eleven Labs API
+    const response = await axios.post(apiUrl, requestBody, {
+      headers: {
+        'xi-api-key': process.env.ELEVENLABS_API_KEY,
+        'Content-Type': 'application/json'
+      },
+      responseType: 'arraybuffer'
+    });
+    
+    console.log(`[TTS POST] Eleven Labs API response status: ${response.status}`);
+    console.log(`[TTS POST] Audio data size: ${response.data.length} bytes`);
+    
+    // Set appropriate headers for audio response
+    res.set({
+      'Content-Type': 'audio/mpeg',
+      'Content-Disposition': 'attachment; filename="speech.mp3"',
+      'Content-Length': response.data.length
+    });
+    
+    // Send the audio data
+    res.send(response.data);
+    
+    console.log(`[TTS POST] Audio successfully sent to client`);
+    
+  } catch (error) {
+    console.error("[TTS POST] Error generating text-to-speech:", error.message);
+    
+    if (error.response) {
+      const status = error.response.status;
+      console.error(`[TTS POST] Eleven Labs API error - Status: ${status}`);
+      console.error(`[TTS POST] Error response:`, error.response.data);
+      
+      if (status === 401) {
+        return res.status(401).json({ error: "Invalid Eleven Labs API key." });
+      } else if (status === 429) {
+        return res.status(429).json({ error: "Rate limit exceeded. Please try again later." });
+      } else if (status === 422) {
+        return res.status(422).json({ error: "Invalid request parameters." });
+      }
+    } else if (error.request) {
+      console.error(`[TTS POST] Network error - no response received:`, error.request);
+    } else {
+      console.error(`[TTS POST] Request setup error:`, error.message);
+    }
+    
+    res.status(500).json({ error: "Failed to generate text-to-speech audio." });
   }
 });
 

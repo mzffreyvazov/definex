@@ -20,25 +20,40 @@ document.addEventListener('dblclick', handleSelection);
 function handleSelection(event) {
   const selectedText = window.getSelection().toString().trim();
   
-  if (selectedText.length > 0 && /^[a-zA-Z]+$/.test(selectedText)) {
+  // Check if selection is valid based on the source
+  chrome.storage.local.get(['preferredSource'], (settings) => {
+    const source = settings.preferredSource || 'cambridge';
+    
+    let isValidSelection = false;
+    
+    if (source === 'gemini') {
+      // For Gemini: allow phrases up to 5 words (letters, spaces, hyphens, apostrophes)
+      const words = selectedText.split(/\s+/).filter(word => word.length > 0);
+      isValidSelection = words.length >= 1 && words.length <= 5 && 
+                       /^[a-zA-Z\s'-]+$/.test(selectedText);
+    } else {
+      // For other sources: only single words
+      isValidSelection = selectedText.length > 0 && /^[a-zA-Z]+$/.test(selectedText);
+    }
+    
+    if (!isValidSelection) {
+      return; // Don't show popup for invalid selections
+    }
+    
     // Remove existing popup if it exists
     removePopup();
     
-    // Get the current source setting to show in loading message
-    chrome.storage.local.get(['preferredSource'], (settings) => {
-      const source = settings.preferredSource || 'cambridge';
-      const sourceDisplayName = getSourceDisplayName(source);
-      
-      let loadingMessage;
-      if (source === 'gemini') {
-        loadingMessage = `<span style="font-family: 'Open Sans', sans-serif;">Loading definition for "<strong>${selectedText}</strong>" from <em>${sourceDisplayName}</em> with audio from <em>Cambridge</em>...</span>`;
-      } else {
-        loadingMessage = `<span style="font-family: 'Open Sans', sans-serif;">Loading definition for "<strong>${selectedText}</strong>" from <em>${sourceDisplayName}</em>...</span>`;
-      }
-      
-      // Create a placeholder popup while fetching
-      createPopup(event.clientX, event.clientY, loadingMessage);
-    });
+    const sourceDisplayName = getSourceDisplayName(source);
+    
+    let loadingMessage;
+    if (source === 'gemini') {
+      loadingMessage = `<span style="font-family: 'Open Sans', sans-serif;">Loading definition for "<strong>${selectedText}</strong>" from <em>${sourceDisplayName}</em> with audio from <em>Cambridge</em>...</span>`;
+    } else {
+      loadingMessage = `<span style="font-family: 'Open Sans', sans-serif;">Loading definition for "<strong>${selectedText}</strong>" from <em>${sourceDisplayName}</em>...</span>`;
+    }
+    
+    // Create a placeholder popup while fetching
+    createPopup(event.clientX, event.clientY, loadingMessage);
     
     // Send the selected word to the background script
     chrome.runtime.sendMessage({ type: 'getDefinition', word: selectedText }, (response) => {
@@ -55,7 +70,7 @@ function handleSelection(event) {
         updatePopupContent(`Error: ${response.message || 'Definition not found.'}`);
       }
     });
-  }
+  });
 }
 
 // Format the data from the API into clean HTML

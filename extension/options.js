@@ -1,8 +1,8 @@
 // Source descriptions for each option
 const sourceDescriptions = {
-  'cambridge': 'Fast and reliable definitions from Cambridge Dictionary via local server.',
-  'merriam-webster': 'Authoritative definitions from America\'s most trusted dictionary. Requires API key.',
-  'gemini': 'AI-powered definitions from Google Gemini with pronunciation audio from Cambridge.'
+  'cambridge': 'Fast and reliable definitions from Cambridge Dictionary via local server. Single words only.',
+  'merriam-webster': 'Authoritative definitions from America\'s most trusted dictionary. Single words only. Requires API key.',
+  'gemini': 'AI-powered definitions from Google Gemini with pronunciation audio from Cambridge. Supports both single words and phrases (up to 5 words).'
 };
 
 // Show/hide API key section and update description based on selected source

@@ -221,18 +221,24 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // Function to build the prompt for the AI
 function getGeminiPrompt(word) {
+  // Determine if input is a single word or phrase
+  const words = word.trim().split(/\s+/);
+  const isPhrase = words.length > 1;
+  const inputType = isPhrase ? 'phrase' : 'word';
+  const inputLabel = isPhrase ? 'phrase' : 'word';
+  
   return `
-    You are a helpful linguistic expert API. Your task is to provide a detailed definition for the word: "${word}".
+    You are a helpful linguistic expert API. Your task is to provide a detailed definition for the ${inputType}: "${word}".
 
     You MUST respond with ONLY a valid JSON object. Do not include any introductory text, explanations, or markdown formatting like \`\`\`json.
 
     The JSON object must follow this exact structure:
     {
-      "word": "the original word",
+      "${inputLabel}": "the original ${inputType}",
       "pronunciation": "/ipa_pronunciation/",
       "forms": [
         {
-          "partOfSpeech": "part of speech (e.g., verb, noun)",
+          "partOfSpeech": "${isPhrase ? 'phrase type (e.g., idiom, compound noun, phrasal verb)' : 'part of speech (e.g., verb, noun)'}",
           "definitions": [
             {
               "definition": "The clear and concise definition text.",
@@ -249,16 +255,21 @@ function getGeminiPrompt(word) {
       ]
     }
 
-    - Provide all common parts of speech for the word.
-    - For each part of speech, provide at least one common definition.
-    - For each definition, provide exactly 5 distinct example sentences.
-    - If the word is nonsensical or cannot be defined, return this exact JSON object: {"error": "Word not found"}
+    ${isPhrase ? 
+      `- For phrases, identify the type (idiom, compound noun, phrasal verb, collocation, etc.)
+       - Provide clear definitions that explain the meaning of the phrase as a whole
+       - Include pronunciation if commonly used as a unit
+       - For each definition, provide exactly 5 distinct example sentences showing the phrase in context` :
+      `- Provide all common parts of speech for the word
+       - For each part of speech, provide at least one common definition
+       - For each definition, provide exactly 5 distinct example sentences`}
+    - If the ${inputType} is nonsensical or cannot be defined, return this exact JSON object: {"error": "${inputType.charAt(0).toUpperCase() + inputType.slice(1)} not found"}
   `;
 }
 
 app.get("/api/gemini/:entry", async (req, res) => {
   try {
-    const word = req.params.entry;
+    const word = decodeURIComponent(req.params.entry);
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
     const prompt = getGeminiPrompt(word);
 

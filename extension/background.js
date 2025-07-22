@@ -49,7 +49,7 @@ function normalizeGeminiData(aiData) {
   });
   const pronunciation = { lang: 'us', pron: aiData.pronunciation || '', url: '' };
   return {
-    word: aiData.word,
+    word: aiData.word || aiData.phrase, // Handle both word and phrase properties
     pos: definitions.map(d => d.pos),
     verbs: [],
     pronunciation: [pronunciation],
@@ -102,8 +102,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         let apiPromise;
 
         if (source === 'gemini') {
-          const geminiUrl = `http://localhost:3000/api/gemini/${word}`;
-          const cambridgeUrl = `http://localhost:3000/api/dictionary/en/${word}`;
+          const encodedWord = encodeURIComponent(word);
+          const geminiUrl = `http://localhost:3000/api/gemini/${encodedWord}`;
+          const cambridgeUrl = `http://localhost:3000/api/dictionary/en/${encodedWord}`;
           apiPromise = Promise.all([
             fetch(geminiUrl).then(res => res.json()),
             fetch(cambridgeUrl).then(res => res.json().catch(() => null)) // Prevent crash if Cambridge fails

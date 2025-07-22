@@ -91,7 +91,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'getDefinition') {
     const word = message.word.toLowerCase();
 
-    chrome.storage.local.get(['preferredSource', 'mwApiKey', 'targetLanguage', 'definitionScope', 'exampleCount'], (settings) => {
+    chrome.storage.local.get(['preferredSource', 'mwApiKey', 'targetLanguage', 'definitionScope', 'exampleCount', 'ttsEnabled'], (settings) => {
       const source = settings.preferredSource || 'cambridge';
       const mwApiKey = settings.mwApiKey;
       const targetLanguage = settings.targetLanguage || 'none';
@@ -100,7 +100,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       chrome.storage.local.get(displaySettingsCacheKey, (result) => {
         if (result[displaySettingsCacheKey]) {
           console.log(`Found processed data in cache for "${word}" with current settings.`);
-          sendResponse({ status: 'success', data: result[displaySettingsCacheKey] });
+          sendResponse({ status: 'success', data: result[displaySettingsCacheKey], ttsEnabled: settings.ttsEnabled || false });
           return;
         }
 
@@ -168,7 +168,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           const finalData = applyDisplayPreferences(fullData, settings);
 
           chrome.storage.local.set({ [displaySettingsCacheKey]: finalData });
-          sendResponse({ status: 'success', data: finalData });
+          sendResponse({ status: 'success', data: finalData, ttsEnabled: settings.ttsEnabled || false });
         }).catch(error => {
           console.error(`API Error for "${word}" from ${source}:`, error);
           sendResponse({ status: 'error', message: error.message });
@@ -182,7 +182,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'translateSentence') {
     const sentence = message.text;
 
-    chrome.storage.local.get(['targetLanguage'], (settings) => {
+    chrome.storage.local.get(['targetLanguage', 'ttsEnabled'], (settings) => {
       const targetLanguage = settings.targetLanguage || 'Spanish'; // Default to Spanish
       // Use a more robust encoding method that handles Unicode characters
       const encodedSentence = encodeURIComponent(sentence).replace(/[!'()*]/g, function(c) {
@@ -193,7 +193,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       chrome.storage.local.get(cacheKey, (result) => {
         if (result[cacheKey]) {
           console.log(`Found sentence translation in cache.`);
-          sendResponse({ status: 'success', data: result[cacheKey] });
+          sendResponse({ status: 'success', data: result[cacheKey], ttsEnabled: settings.ttsEnabled || false });
           return;
         }
 
@@ -210,7 +210,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             }
             
             chrome.storage.local.set({ [cacheKey]: data });
-            sendResponse({ status: 'success', data: data });
+            sendResponse({ status: 'success', data: data, ttsEnabled: settings.ttsEnabled || false });
           })
           .catch(error => {
             console.error(`Translation Error for sentence:`, error);

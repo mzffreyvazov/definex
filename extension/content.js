@@ -102,7 +102,8 @@ function handleSelection(event) {
       }
 
       if (response.status === 'success') {
-        const content = isSentence ? formatTranslationData(response.data) : formatData(response.data);
+        const ttsEnabled = response.ttsEnabled || false;
+        const content = isSentence ? formatTranslationData(response.data, ttsEnabled) : formatData(response.data, ttsEnabled);
         updatePopupContent(content);
       } else {
         updatePopupContent(`Error: ${response.message || (isSentence ? 'Translation failed.' : 'Definition not found.')}`);
@@ -112,7 +113,7 @@ function handleSelection(event) {
 }
 
 // Format the data from the API into clean HTML
-function formatData(data) {
+function formatData(data, ttsEnabled = false) {
   const word = data.word;
   const translation = data.translation; // Word/phrase translation
   const pronunciation = data.pronunciation.find(p => p.lang === 'us' && p.pron) || data.pronunciation.find(p => p.pron);
@@ -128,7 +129,7 @@ function formatData(data) {
       <span class="qdp-word">${word}</span>
       <span class="qdp-pron">${pronunciation ? pronunciation.pron : ''}</span>
       ${audioUrl ? `<button id="qdp-audio-btn" title="Play pronunciation" data-audio-src="${audioUrl}">🔊</button>` : ''}
-      ${isPhrase ? `<button id="qdp-tts-phrase-btn" title="Play phrase with TTS" data-tts-text="${word}">🔊</button>` : ''}
+      ${isPhrase && ttsEnabled ? `<button id="qdp-tts-phrase-btn" title="Play phrase with TTS" data-tts-text="${word}">🔊</button>` : ''}
     </div>
   `;
 
@@ -182,13 +183,13 @@ function formatData(data) {
 }
 
 // Format translation data for sentences
-function formatTranslationData(data) {
+function formatTranslationData(data, ttsEnabled = false) {
   let html = `
     <div class="qdp-sentence-header">
       <div class="qdp-sentence-original">
         <span class="qdp-sentence-label">Original:</span>
         <div class="qdp-sentence-text">"${data.originalSentence}"
-          <button id="qdp-tts-original-btn" title="Play original sentence" data-tts-text="${data.originalSentence}">🔊</button>
+          ${ttsEnabled ? `<button id="qdp-tts-original-btn" title="Play original sentence" data-tts-text="${data.originalSentence}">🔊</button>` : ''}
         </div>
       </div>
       <div class="qdp-sentence-translation">

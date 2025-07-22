@@ -35,9 +35,9 @@ function save_options() {
   const source = document.getElementById('source').value;
   const mwKey = document.getElementById('mw-key').value;
   const targetLanguage = document.getElementById('target-language').value;
-
   const definitionScope = document.getElementById('definition-scope').value;
   const exampleCount = parseInt(document.getElementById('example-count').value, 10);
+  const ttsEnabled = document.getElementById('tts-enabled').checked;
 
   // Validate Merriam-Webster API key if that source is selected
   if (source === 'merriam-webster' && !mwKey.trim()) {
@@ -56,7 +56,8 @@ function save_options() {
     mwApiKey: mwKey,
     targetLanguage: targetLanguage,
     definitionScope: definitionScope,
-    exampleCount: exampleCount
+    exampleCount: exampleCount,
+    ttsEnabled: ttsEnabled
   }, function() {
     // Update status to let user know options were saved.
     const status = document.getElementById('status');
@@ -78,7 +79,8 @@ function restore_options() {
     mwApiKey: '',
     targetLanguage: 'none',      // Default to no translation
     definitionScope: 'relevant', // Default to showing only relevant
-    exampleCount: 1             // Default to showing 1 example
+    exampleCount: 1,             // Default to showing 1 example
+    ttsEnabled: false            // Default to TTS disabled
   }, function(items) {
     document.getElementById('source').value = items.preferredSource;
     document.getElementById('mw-key').value = items.mwApiKey;
@@ -86,6 +88,7 @@ function restore_options() {
     // --- RESTORE NEW SETTINGS TO THE UI ---
     document.getElementById('definition-scope').value = items.definitionScope;
     document.getElementById('example-count').value = items.exampleCount;
+    document.getElementById('tts-enabled').checked = items.ttsEnabled;
     
     updateSourceUI();
   });

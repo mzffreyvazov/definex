@@ -1,0 +1,57 @@
+###################
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.so
+
+# Packages #
+############
+# Mac OS X Finder files
+.DS_Store
+# Linux system files
+.directory
+
+# Logs and databases #
+####################
+*.log
+*.sql
+*.sqlite
+
+# OS-specific files #
+#####################
+.DS_Store
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE-specific files #
+######################
+.vscode/
+.idea/
+
+# Build artifacts #
+###################
+dist/
+build/
+
+# Dependency directories #
+##########################
+node_modules/
+bower_components/
+
+# Configuration files #
+#######################
+config.js
+.env
+
+# Temporary files #
+###################
+*.tmp
+*~
+
+# Browser extension specific #
+############################
+*.zip
+*.crx

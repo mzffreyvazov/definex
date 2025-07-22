@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "Quick Definition Popup",
+  "version": "1.0",
+  "description": "Instantly shows rich English definitions when you select a word.",
+  "permissions": [
+    "activeTab",
+    "storage"
+  ],
+  "host_permissions": [
+    "http://localhost:3000/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "css": [
+        "style.css"
+      ]
+    }
+  ],
+  "action": {
+    "default_title": "Quick Definition"
+  }
+}

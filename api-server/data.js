@@ -220,34 +220,67 @@ if (!process.env.GEMINI_API_KEY) {
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // Function to build the prompt for the AI
-function getGeminiPrompt(word) {
+function getGeminiPrompt(word, targetLanguage = null) {
   // Determine if input is a single word or phrase
   const words = word.trim().split(/\s+/);
   const isPhrase = words.length > 1;
   const inputType = isPhrase ? 'phrase' : 'word';
   const inputLabel = isPhrase ? 'phrase' : 'word';
   
+  // Translation instruction based on target language
+  const translationInstruction = targetLanguage && targetLanguage !== 'none' 
+    ? `\n\nIMPORTANT: Include translations to ${targetLanguage} for the following:
+       - Add a "translation" field with the ${inputType} translated to ${targetLanguage}
+       - For each definition, add a "definitionTranslation" field with the definition translated to ${targetLanguage}
+       - For each example, add a "translation" field with the example translated to ${targetLanguage}`
+    : '';
+  
+  const translationFields = targetLanguage && targetLanguage !== 'none'
+    ? `,
+      "translation": "the ${inputType} translated to ${targetLanguage}"`
+    : '';
+    
+  const definitionTranslationField = targetLanguage && targetLanguage !== 'none'
+    ? `,
+              "definitionTranslation": "The definition translated to ${targetLanguage}"`
+    : '';
+    
+  const exampleTranslationField = targetLanguage && targetLanguage !== 'none'
+    ? `,
+                "translation": "The example translated to ${targetLanguage}"`
+    : '';
+  
   return `
-    You are a helpful linguistic expert API. Your task is to provide a detailed definition for the ${inputType}: "${word}".
+    You are a helpful linguistic expert API. Your task is to provide a detailed definition for the ${inputType}: "${word}".${translationInstruction}
 
     You MUST respond with ONLY a valid JSON object. Do not include any introductory text, explanations, or markdown formatting like \`\`\`json.
 
     The JSON object must follow this exact structure:
     {
-      "${inputLabel}": "the original ${inputType}",
+      "${inputLabel}": "the original ${inputType}"${translationFields},
       "pronunciation": "/ipa_pronunciation/",
       "forms": [
         {
           "partOfSpeech": "${isPhrase ? 'phrase type (e.g., idiom, compound noun, phrasal verb)' : 'part of speech (e.g., verb, noun)'}",
           "definitions": [
             {
-              "definition": "The clear and concise definition text.",
+              "definition": "The clear and concise definition text."${definitionTranslationField},
               "examples": [
-                "Example sentence 1.",
-                "Example sentence 2.",
-                "Example sentence 3.",
-                "Example sentence 4.",
-                "Example sentence 5."
+                {
+                  "text": "Example sentence 1."${exampleTranslationField}
+                },
+                {
+                  "text": "Example sentence 2."${exampleTranslationField}
+                },
+                {
+                  "text": "Example sentence 3."${exampleTranslationField}
+                },
+                {
+                  "text": "Example sentence 4."${exampleTranslationField}
+                },
+                {
+                  "text": "Example sentence 5."${exampleTranslationField}
+                }
               ]
             }
           ]
@@ -270,8 +303,9 @@ function getGeminiPrompt(word) {
 app.get("/api/gemini/:entry", async (req, res) => {
   try {
     const word = decodeURIComponent(req.params.entry);
+    const targetLanguage = req.query.lang || null; // Get target language from query parameter
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
-    const prompt = getGeminiPrompt(word);
+    const prompt = getGeminiPrompt(word, targetLanguage);
 
     const result = await model.generateContent(prompt);
     let responseText = result.response.text();

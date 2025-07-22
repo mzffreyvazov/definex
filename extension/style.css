@@ -51,6 +51,75 @@
   background-color: #f0f0f0;
 }
 
+/* Translation header styles */
+.qdp-translation-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #f8f9fa;
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  border-left: 4px solid #007acc;
+}
+
+.qdp-translation-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #007acc;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.qdp-word-translation {
+  font-size: 16px;
+  font-weight: 500;
+  color: #333;
+}
+
+/* Definition translation styles */
+.qdp-definition-translation {
+  font-size: 14px;
+  color: #2d5016;
+  font-weight: 500;
+  margin: 8px 0;
+  padding: 10px 14px;
+  background: linear-gradient(135deg, #f0f8f0 0%, #e8f5e8 100%);
+  border-radius: 6px;
+  border: 1px solid #d4edda;
+  border-left: 4px solid #28a745;
+  box-shadow: 0 2px 4px rgba(40, 167, 69, 0.1);
+}
+
+.qdp-definition-translation .qdp-translation-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #28a745;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-right: 6px;
+}
+
+/* Example translation styles */
+.qdp-example-translation {
+  font-size: 12px;
+  color: #555;
+  margin-top: 6px;
+  padding: 4px 8px;
+  background-color: #ffffff;
+  border-radius: 3px;
+  font-style: normal;
+  border: 1px solid #e3f2fd;
+  position: relative;
+}
+
+.qdp-example-translation::before {
+  content: "→";
+  color: #007acc;
+  font-weight: bold;
+  margin-right: 6px;
+}
+
 .qdp-body {
   display: flex;
   flex-direction: column;
@@ -59,6 +128,9 @@
 
 .qdp-definition {
   font-size: 15px;
+  line-height: 1.5;
+  margin-bottom: 6px;
+  color: #2c3e50;
 }
 
 .qdp-example {
@@ -70,19 +142,28 @@
 /* Add this to your style.css file */
 
 .qdp-pos {
-  font-weight: bold;
+  font-weight: 600;
   font-style: italic;
-  color: #005a9c; /* A nice, distinct blue color */
-  margin-right: 6px;
+  color: #005a9c;
+  margin-right: 8px;
+  background-color: #e3f2fd;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 12px;
+  text-transform: lowercase;
 }
 
 /* ... (all your existing styles) ... */
 
 /* ADD THIS NEW RULE */
 .qdp-definition-block:not(:last-child) {
-  margin-bottom: 14px;
-  padding-bottom: 10px;
-  border-bottom: 1px dashed #eee;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px dashed #ddd;
+}
+
+.qdp-definition-block {
+  padding: 4px 0;
 }
 
 /* MODIFIED to work inside the new block structure */
@@ -90,6 +171,10 @@
   color: #666;
   font-style: italic;
   border-left: 3px solid #007acc;
-  padding-left: 10px;
-  margin-top: 8px; /* Add some space above the first example */
+  padding: 8px 12px;
+  margin: 8px 0;
+  background-color: #f8fbff;
+  border-radius: 4px;
+  font-size: 13px;
+  line-height: 1.4;
 }

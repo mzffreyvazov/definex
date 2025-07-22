@@ -44,12 +44,17 @@ function normalizeGeminiData(aiData) {
     return {
       pos: form.partOfSpeech || 'unknown',
       text: firstDef.definition || 'No definition text found.',
-      example: firstDef.examples ? firstDef.examples.map(ex => ({ text: ex })) : []
+      translation: firstDef.definitionTranslation || null, // Add translation support
+      example: firstDef.examples ? firstDef.examples.map(ex => ({
+        text: typeof ex === 'string' ? ex : ex.text,
+        translation: typeof ex === 'object' ? ex.translation : null // Add translation support for examples
+      })) : []
     };
   });
   const pronunciation = { lang: 'us', pron: aiData.pronunciation || '', url: '' };
   return {
     word: aiData.word || aiData.phrase, // Handle both word and phrase properties
+    translation: aiData.translation || null, // Add word/phrase translation
     pos: definitions.map(d => d.pos),
     verbs: [],
     pronunciation: [pronunciation],
@@ -86,10 +91,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'getDefinition') {
     const word = message.word.toLowerCase();
 
-    chrome.storage.local.get(['preferredSource', 'mwApiKey', 'definitionScope', 'exampleCount'], (settings) => {
+    chrome.storage.local.get(['preferredSource', 'mwApiKey', 'targetLanguage', 'definitionScope', 'exampleCount'], (settings) => {
       const source = settings.preferredSource || 'cambridge';
       const mwApiKey = settings.mwApiKey;
-      const displaySettingsCacheKey = `qdp_${source}_${word}_${settings.definitionScope}_${settings.exampleCount}`;
+      const targetLanguage = settings.targetLanguage || 'none';
+      const displaySettingsCacheKey = `qdp_${source}_${word}_${settings.definitionScope}_${settings.exampleCount}_${targetLanguage}`;
 
       chrome.storage.local.get(displaySettingsCacheKey, (result) => {
         if (result[displaySettingsCacheKey]) {
@@ -103,7 +109,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
         if (source === 'gemini') {
           const encodedWord = encodeURIComponent(word);
-          const geminiUrl = `http://localhost:3000/api/gemini/${encodedWord}`;
+          const langParam = targetLanguage && targetLanguage !== 'none' ? `?lang=${encodeURIComponent(targetLanguage)}` : '';
+          const geminiUrl = `http://localhost:3000/api/gemini/${encodedWord}${langParam}`;
           
           // Check if it's a single word or phrase
           const words = word.split(/\s+/).filter(w => w.length > 0);

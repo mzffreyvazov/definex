@@ -82,14 +82,14 @@ function handleSelection(event) {
 }
 
 // Format the data from the API into clean HTML
-// Format the data from the API into clean HTML
 function formatData(data) {
   const word = data.word;
+  const translation = data.translation; // Word/phrase translation
   const pronunciation = data.pronunciation.find(p => p.lang === 'us' && p.pron) || data.pronunciation.find(p => p.pron);
   const audioUrl = pronunciation ? pronunciation.url : null;
 
-  // Start with the header
-  const headerHTML = `
+  // Start with the header, including translation if available
+  let headerHTML = `
     <div class="qdp-header">
       <span class="qdp-word">${word}</span>
       <span class="qdp-pron">${pronunciation ? pronunciation.pron : ''}</span>
@@ -97,22 +97,49 @@ function formatData(data) {
     </div>
   `;
 
+  // Add translation header if available
+  if (translation) {
+    headerHTML += `
+      <div class="qdp-translation-header">
+        <span class="qdp-translation-label">Translation:</span>
+        <span class="qdp-word-translation">${translation}</span>
+      </div>
+    `;
+  }
+
   // Generate HTML for each definition block
   const definitionsHTML = data.definition.map(def => {
     // Generate HTML for each example within this definition
-    const examplesHTML = def.example.map(ex => 
-      `<div class="qdp-example">e.g., "<em>${ex.text}</em>"</div>`
-    ).join('');
+    const examplesHTML = def.example.map(ex => {
+      let exampleHTML = `<div class="qdp-example">e.g., "<em>${ex.text}</em>"`;
+      // Add translation if available
+      if (ex.translation) {
+        exampleHTML += `<div class="qdp-example-translation"> <em>${ex.translation}</em></div>`;
+      }
+      exampleHTML += `</div>`;
+      return exampleHTML;
+    }).join('');
 
-    return `
+    // Build definition block with translation if available
+    let definitionHTML = `
       <div class="qdp-definition-block">
         <div class="qdp-definition">
           <span class="qdp-pos">${def.pos}</span>
           ${def.text}
         </div>
-        ${examplesHTML}
-      </div>
     `;
+    
+    // Add definition translation if available
+    if (def.translation) {
+      definitionHTML += `
+        <div class="qdp-definition-translation">
+          <span class="qdp-translation-label">Definition:</span> ${def.translation}
+        </div>
+      `;
+    }
+    
+    definitionHTML += `${examplesHTML}</div>`;
+    return definitionHTML;
   }).join('');
 
   return headerHTML + `<div class="qdp-body">${definitionsHTML}</div>`;

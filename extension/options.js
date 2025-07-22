@@ -5,10 +5,11 @@ const sourceDescriptions = {
   'gemini': 'AI-powered definitions from Google Gemini with pronunciation audio from Cambridge. Supports both single words and phrases (up to 5 words).'
 };
 
-// Show/hide API key section and update description based on selected source
+// Show/hide API key section and translation section based on selected source
 function updateSourceUI() {
   const source = document.getElementById('source').value;
   const apiSection = document.getElementById('mw-api-section');
+  const translationSection = document.getElementById('translation-section');
   const description = document.getElementById('source-description');
   
   // Update description
@@ -20,12 +21,20 @@ function updateSourceUI() {
   } else {
     apiSection.classList.add('hidden');
   }
+  
+  // Show/hide translation section (only for Gemini)
+  if (source === 'gemini') {
+    translationSection.classList.remove('hidden');
+  } else {
+    translationSection.classList.add('hidden');
+  }
 }
 
 // Saves options to chrome.storage
 function save_options() {
   const source = document.getElementById('source').value;
   const mwKey = document.getElementById('mw-key').value;
+  const targetLanguage = document.getElementById('target-language').value;
 
   const definitionScope = document.getElementById('definition-scope').value;
   const exampleCount = parseInt(document.getElementById('example-count').value, 10);
@@ -45,6 +54,7 @@ function save_options() {
   chrome.storage.local.set({
     preferredSource: source,
     mwApiKey: mwKey,
+    targetLanguage: targetLanguage,
     definitionScope: definitionScope,
     exampleCount: exampleCount
   }, function() {
@@ -66,11 +76,13 @@ function restore_options() {
   chrome.storage.local.get({
     preferredSource: 'cambridge',
     mwApiKey: '',
+    targetLanguage: 'none',      // Default to no translation
     definitionScope: 'relevant', // Default to showing only relevant
     exampleCount: 1             // Default to showing 1 example
   }, function(items) {
     document.getElementById('source').value = items.preferredSource;
     document.getElementById('mw-key').value = items.mwApiKey;
+    document.getElementById('target-language').value = items.targetLanguage;
     // --- RESTORE NEW SETTINGS TO THE UI ---
     document.getElementById('definition-scope').value = items.definitionScope;
     document.getElementById('example-count').value = items.exampleCount;

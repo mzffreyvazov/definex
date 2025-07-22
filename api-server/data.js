@@ -407,7 +407,7 @@ app.get("/api/tts/:text", async (req, res) => {
     }
     
     if (!process.env.ELEVENLABS_API_KEY) {
-      console.log(`[TTS GET] Error - ELEVENLABS_API_KEY not found in environment`);
+      console.log(`[TTS GET] Error - EL EVENLABS_API_KEY not found in environment`);
       return res.status(500).json({ error: "ELEVENLABS_API_KEY is not set in the .env file." });
     }
     

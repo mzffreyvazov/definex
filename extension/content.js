@@ -128,7 +128,7 @@ function formatData(data) {
       <span class="qdp-word">${word}</span>
       <span class="qdp-pron">${pronunciation ? pronunciation.pron : ''}</span>
       ${audioUrl ? `<button id="qdp-audio-btn" title="Play pronunciation" data-audio-src="${audioUrl}">🔊</button>` : ''}
-      ${isPhrase ? `<button id="qdp-tts-phrase-btn" title="Play phrase with TTS" data-tts-text="${word}">🎵</button>` : ''}
+      ${isPhrase ? `<button id="qdp-tts-phrase-btn" title="Play phrase with TTS" data-tts-text="${word}">🔊</button>` : ''}
     </div>
   `;
 
@@ -146,16 +146,7 @@ function formatData(data) {
   const definitionsHTML = data.definition.map(def => {
     // Generate HTML for each example within this definition
     const examplesHTML = def.example.map(ex => {
-      // Check if example is a phrase/sentence for TTS
-      const exampleWords = ex.text.split(/\s+/).filter(w => w.length > 0);
-      const isExamplePhrase = exampleWords.length > 1;
-      
       let exampleHTML = `<div class="qdp-example">e.g., "<em>${ex.text}</em>"`;
-      
-      // Add TTS button for phrases/sentences
-      if (isExamplePhrase) {
-        exampleHTML += ` <button class="qdp-tts-example-btn" title="Play example with TTS" data-tts-text="${ex.text}">🎵</button>`;
-      }
       
       // Add translation if available
       if (ex.translation) {
@@ -207,16 +198,6 @@ function formatTranslationData(data) {
     </div>
   `;
 
-  // Add context if available
-  if (data.context) {
-    html += `
-      <div class="qdp-sentence-context">
-        <span class="qdp-sentence-context-label">Context:</span>
-        <div class="qdp-sentence-context-text">${data.context}</div>
-      </div>
-    `;
-  }
-
   // Add key phrases if available
   if (data.keyPhrases && data.keyPhrases.length > 0) {
     const keyPhrasesHTML = data.keyPhrases.map(phrase => `
@@ -230,8 +211,11 @@ function formatTranslationData(data) {
 
     html += `
       <div class="qdp-key-phrases">
-        <span class="qdp-key-phrases-label">Key Phrases:</span>
-        <div class="qdp-key-phrases-list">${keyPhrasesHTML}</div>
+        <div class="qdp-key-phrases-header" id="qdp-key-phrases-header">
+          <span class="qdp-key-phrases-label">Key Phrases</span>
+          <span class="qdp-toggle-icon" id="qdp-toggle-icon">▶</span>
+        </div>
+        <div class="qdp-key-phrases-list" id="qdp-key-phrases-content" style="display: none;">${keyPhrasesHTML}</div>
       </div>
     `;
   }
@@ -266,10 +250,11 @@ function createPopup(x, y, content, isSentence = false) {
     btn.addEventListener('click', playTTS);
   });
   
-  const ttsExampleBtns = document.querySelectorAll('.qdp-tts-example-btn');
-  ttsExampleBtns.forEach(btn => {
-    btn.addEventListener('click', playTTS);
-  });
+  // Add key phrases toggle listener
+  const keyPhrasesHeader = document.getElementById('qdp-key-phrases-header');
+  if (keyPhrasesHeader) {
+    keyPhrasesHeader.addEventListener('click', toggleKeyPhrases);
+  }
 }
 
 // Update the content of the existing popup
@@ -287,10 +272,11 @@ function updatePopupContent(content) {
       btn.addEventListener('click', playTTS);
     });
     
-    const ttsExampleBtns = document.querySelectorAll('.qdp-tts-example-btn');
-    ttsExampleBtns.forEach(btn => {
-      btn.addEventListener('click', playTTS);
-    });
+    // Add key phrases toggle listener
+    const keyPhrasesHeader = document.getElementById('qdp-key-phrases-header');
+    if (keyPhrasesHeader) {
+      keyPhrasesHeader.addEventListener('click', toggleKeyPhrases);
+    }
   }
 }
 
@@ -349,6 +335,33 @@ function playTTS(event) {
         });
     }
 }
+
+// Toggle function for key phrases section
+function toggleKeyPhrases() {
+    console.log('toggleKeyPhrases called');
+    const content = document.getElementById('qdp-key-phrases-content');
+    const icon = document.getElementById('qdp-toggle-icon');
+    
+    console.log('Content element:', content);
+    console.log('Icon element:', icon);
+    
+    if (content && icon) {
+        if (content.style.display === 'none') {
+            content.style.display = 'block';
+            icon.textContent = '▼';
+            console.log('Expanded key phrases');
+        } else {
+            content.style.display = 'none';
+            icon.textContent = '▶';
+            console.log('Collapsed key phrases');
+        }
+    } else {
+        console.log('Could not find content or icon elements');
+    }
+}
+
+// Make toggleKeyPhrases available globally
+window.toggleKeyPhrases = toggleKeyPhrases;
 
 // Remove the popup from the page
 function removePopup() {

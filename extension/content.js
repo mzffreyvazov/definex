@@ -62,28 +62,37 @@ function handleSelection(event) {
 // Format the data from the API into clean HTML
 function formatData(data) {
   const word = data.word;
-  // Let's try to get a US pronunciation first, then fall back to any other
   const pronunciation = data.pronunciation.find(p => p.lang === 'us' && p.pron) || data.pronunciation.find(p => p.pron);
-  const definition = data.definition[0]; // Get the first definition block
-  const example = definition.example[0]; // Get the first example
-
   const audioUrl = pronunciation ? pronunciation.url : null;
-  const partOfSpeech = definition.pos; // <-- Get the part of speech from the definition
 
-  return `
+  // Start with the header
+  const headerHTML = `
     <div class="qdp-header">
       <span class="qdp-word">${word}</span>
       <span class="qdp-pron">${pronunciation ? pronunciation.pron : ''}</span>
       ${audioUrl ? `<button id="qdp-audio-btn" title="Play pronunciation" data-audio-src="${audioUrl}">🔊</button>` : ''}
     </div>
-    <div class="qdp-body">
-      <div class="qdp-definition">
-        <span class="qdp-pos">${partOfSpeech}</span>
-        ${definition.text}
-      </div>
-      ${example ? `<div class="qdp-example">e.g., "<em>${example.text}</em>"</div>` : ''}
-    </div>
   `;
+
+  // Generate HTML for each definition block
+  const definitionsHTML = data.definition.map(def => {
+    // Generate HTML for each example within this definition
+    const examplesHTML = def.example.map(ex => 
+      `<div class="qdp-example">e.g., "<em>${ex.text}</em>"</div>`
+    ).join('');
+
+    return `
+      <div class="qdp-definition-block">
+        <div class="qdp-definition">
+          <span class="qdp-pos">${def.pos}</span>
+          ${def.text}
+        </div>
+        ${examplesHTML}
+      </div>
+    `;
+  }).join('');
+
+  return headerHTML + `<div class="qdp-body">${definitionsHTML}</div>`;
 }
 
 // Create and display the popup on the page

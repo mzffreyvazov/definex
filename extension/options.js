@@ -27,6 +27,9 @@ function save_options() {
   const source = document.getElementById('source').value;
   const mwKey = document.getElementById('mw-key').value;
 
+  const definitionScope = document.getElementById('definition-scope').value;
+  const exampleCount = parseInt(document.getElementById('example-count').value, 10);
+
   // Validate Merriam-Webster API key if that source is selected
   if (source === 'merriam-webster' && !mwKey.trim()) {
     const status = document.getElementById('status');
@@ -41,7 +44,9 @@ function save_options() {
 
   chrome.storage.local.set({
     preferredSource: source,
-    mwApiKey: mwKey
+    mwApiKey: mwKey,
+    definitionScope: definitionScope,
+    exampleCount: exampleCount
   }, function() {
     // Update status to let user know options were saved.
     const status = document.getElementById('status');
@@ -57,14 +62,19 @@ function save_options() {
 // Restores select box and input field state using the preferences
 // stored in chrome.storage.
 function restore_options() {
-  // Use default value source = 'cambridge' and mwApiKey = ''
+  // --- ADD DEFAULTS FOR NEW SETTINGS ---
   chrome.storage.local.get({
     preferredSource: 'cambridge',
-    mwApiKey: ''
+    mwApiKey: '',
+    definitionScope: 'relevant', // Default to showing only relevant
+    exampleCount: 1             // Default to showing 1 example
   }, function(items) {
     document.getElementById('source').value = items.preferredSource;
     document.getElementById('mw-key').value = items.mwApiKey;
-    // Update UI after restoring values
+    // --- RESTORE NEW SETTINGS TO THE UI ---
+    document.getElementById('definition-scope').value = items.definitionScope;
+    document.getElementById('example-count').value = items.exampleCount;
+    
     updateSourceUI();
   });
 }

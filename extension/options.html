@@ -220,18 +220,17 @@
             <p>Configure your dictionary preferences</p>
         </div>
 
+        <!-- SOURCE OPTIONS -->
         <div class="form-group">
             <label for="source">Dictionary Source:</label>
             <div class="select-wrapper">
                 <select id="source">
                     <option value="cambridge">Cambridge Dictionary</option>
                     <option value="merriam-webster">Merriam-Webster</option>
-                    <option value="gemini">Gemini AI (with Cambridge audio)</option>
+                    <option value="gemini">Gemini AI</option>
                 </select>
             </div>
-            <div id="source-description" class="source-description">
-                Fast and reliable definitions from Cambridge Dictionary via local server.
-            </div>
+            <div id="source-description" class="source-description"></div>
         </div>
 
         <div class="form-group">
@@ -239,9 +238,40 @@
                 <label for="mw-key">Merriam-Webster API Key:</label>
                 <input type="text" id="mw-key" placeholder="Enter your API key here">
                 <div class="api-help">
-                    Get your free API key from <a href="https://dictionaryapi.com/" target="_blank">dictionaryapi.com</a>. 
-                    Sign up and get 1000 free queries per day.
+                    Get your free API key from <a href="https://dictionaryapi.com/" target="_blank">dictionaryapi.com</a>.
                 </div>
+            </div>
+        </div>
+
+        <!-- SEPARATOR -->
+        <hr style="border: none; border-top: 1px solid #e9ecef; margin: 30px 0;">
+
+        <!-- DISPLAY OPTIONS -->
+        <div class="header" style="margin-bottom: 20px; text-align: left;">
+            <h2 style="font-size: 20px; font-weight: 600;">Display Options</h2>
+        </div>
+
+        <div class="form-group">
+            <label for="definition-scope">Definition Scope:</label>
+            <div class="select-wrapper">
+                <select id="definition-scope">
+                    <option value="relevant">Show only the most relevant definition</option>
+                    <option value="all">Show definitions for all parts of speech</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="example-count">Number of Example Sentences (per definition):</label>
+            <div class="select-wrapper">
+                <select id="example-count">
+                    <option value="0">0</option>
+                    <option value="1">1 (Default)</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                </select>
             </div>
         </div>
 
@@ -250,7 +280,6 @@
             <div id="status"></div>
         </div>
     </div>
-
     <script src="options.js"></script>
 </body>
 </html>

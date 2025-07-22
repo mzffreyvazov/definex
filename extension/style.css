@@ -72,3 +72,21 @@
   color: #005a9c; /* A nice, distinct blue color */
   margin-right: 6px;
 }
+
+/* ... (all your existing styles) ... */
+
+/* ADD THIS NEW RULE */
+.qdp-definition-block:not(:last-child) {
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px dashed #eee;
+}
+
+/* MODIFIED to work inside the new block structure */
+.qdp-example {
+  color: #666;
+  font-style: italic;
+  border-left: 3px solid #007acc;
+  padding-left: 10px;
+  margin-top: 8px; /* Add some space above the first example */
+}

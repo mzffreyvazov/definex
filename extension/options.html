@@ -1,51 +1,213 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Quick Definition Settings</title>
+    <title>LexiLens Settings</title>
     <style>
-        body { font-family: sans-serif; padding: 10px 20px; width: 400px; }
-        h2 { color: #333; }
-        .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            padding: 40px;
+            width: 100%;
+            max-width: 500px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            color: #333;
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .form-group { 
+            margin-bottom: 24px; 
+        }
+        
+        label { 
+            display: block; 
+            margin-bottom: 8px; 
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+        
         select, input[type="text"] {
             width: 100%;
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
+            padding: 12px 16px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background: white;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
         }
-        button {
-            padding: 10px 15px;
-            background-color: #007acc;
-            color: white;
-            border: none;
-            border-radius: 4px;
+        
+        select {
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 16px;
             cursor: pointer;
         }
-        button:hover { background-color: #005a9c; }
-        #status { margin-left: 15px; color: green; font-weight: bold; }
+        
+        select:focus, input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            transform: translateY(-1px);
+        }
+        
+        select:hover {
+            border-color: #b8c5f2;
+            transform: translateY(-1px);
+        }
+        
+        .api-key-section {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .api-key-section.hidden {
+            display: none;
+        }
+        
+        .api-help {
+            font-size: 12px;
+            color: #666;
+            margin-top: 6px;
+            line-height: 1.4;
+        }
+        
+        .api-help a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        
+        .api-help a:hover {
+            text-decoration: underline;
+        }
+        
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 30px;
+        }
+        
+        button {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            margin-bottom: 15px;
+        }
+        
+        button:hover { 
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        #status { 
+            color: #28a745; 
+            font-weight: 600;
+            font-size: 14px;
+            text-align: center;
+            min-height: 20px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        #status.show {
+            opacity: 1;
+        }
+        
+        .source-description {
+            font-size: 12px;
+            color: #666;
+            margin-top: 6px;
+            padding: 8px 12px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border-left: 3px solid #667eea;
+        }
     </style>
 </head>
 <body>
+    <div class="container">
+        <div class="header">
+            <h1>LexiLens</h1>
+            <p>Configure your dictionary preferences</p>
+        </div>
 
-    <h2>Quick Definition Settings</h2>
+        <div class="form-group">
+            <label for="source">Dictionary Source:</label>
+            <select id="source">
+                <option value="cambridge">Cambridge Dictionary</option>
+                <option value="merriam-webster">Merriam-Webster</option>
+                <option value="gemini">Gemini AI (with Cambridge audio)</option>
+            </select>
+            <div id="source-description" class="source-description">
+                Fast and reliable definitions from Cambridge Dictionary via local server.
+            </div>
+        </div>
 
-    <div class="form-group">
-        <label for="source">Dictionary Source:</label>
-        <!-- In options.html -->
-        <select id="source">
-            <option value="cambridge">Cambridge (Local Server)</option>
-            <option value="merriam-webster">Merriam-Webster</option>
-            <option value="gemini">Gemini AI</option> <!-- ADD THIS LINE -->
-        </select>
+        <div class="form-group">
+            <div id="mw-api-section" class="api-key-section hidden">
+                <label for="mw-key">Merriam-Webster API Key:</label>
+                <input type="text" id="mw-key" placeholder="Enter your API key here">
+                <div class="api-help">
+                    Get your free API key from <a href="https://dictionaryapi.com/" target="_blank">dictionaryapi.com</a>. 
+                    Sign up and get 1000 free queries per day.
+                </div>
+            </div>
+        </div>
+
+        <div class="button-group">
+            <button id="save">Save Settings</button>
+            <div id="status"></div>
+        </div>
     </div>
-
-    <div class="form-group">
-        <label for="mw-key">Merriam-Webster API Key:</label>
-        <input type="text" id="mw-key" placeholder="Enter your API key here">
-    </div>
-
-    <button id="save">Save</button>
-    <span id="status"></span>
 
     <script src="options.js"></script>
 </body>

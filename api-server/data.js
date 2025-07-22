@@ -259,7 +259,7 @@ function getGeminiPrompt(word) {
 app.get("/api/gemini/:entry", async (req, res) => {
   try {
     const word = req.params.entry;
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
     const prompt = getGeminiPrompt(word);
 
     const result = await model.generateContent(prompt);

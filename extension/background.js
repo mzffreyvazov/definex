@@ -91,10 +91,34 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         let apiPromise;
 
         if (source === 'gemini') {
-            const apiUrl = `http://localhost:3000/api/gemini/${word}`;
-            apiPromise = fetch(apiUrl)
-                .then(res => res.json())
-                .then(data => normalizeGeminiData(data));
+          // For Gemini, fetch from both Gemini AI and Cambridge simultaneously
+          const geminiUrl = `http://localhost:3000/api/gemini/${word}`;
+          const cambridgeUrl = `http://localhost:3000/api/dictionary/en/${word}`;
+          
+          apiPromise = Promise.all([
+            fetch(geminiUrl).then(res => res.json()),
+            fetch(cambridgeUrl).then(res => res.json())
+          ]).then(([geminiData, cambridgeData]) => {
+            const normalizedGemini = normalizeGeminiData(geminiData);
+            if (!normalizedGemini) {
+              throw new Error('Gemini AI definition not found or invalid format.');
+            }
+            
+            // Extract audio from Cambridge data if available
+            if (cambridgeData && cambridgeData.pronunciation && cambridgeData.pronunciation.length > 0) {
+              const cambridgePron = cambridgeData.pronunciation.find(p => p.url) || cambridgeData.pronunciation[0];
+              if (cambridgePron && cambridgePron.url) {
+                // Replace Gemini's empty audio URL with Cambridge's audio
+                normalizedGemini.pronunciation[0].url = cambridgePron.url;
+                // Also update pronunciation text if Gemini doesn't have it
+                if (!normalizedGemini.pronunciation[0].pron && cambridgePron.pron) {
+                  normalizedGemini.pronunciation[0].pron = cambridgePron.pron;
+                }
+              }
+            }
+            
+            return normalizedGemini;
+          });
         
         } else if (source === 'merriam-webster') {
           if (!mwApiKey) {

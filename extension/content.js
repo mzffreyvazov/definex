@@ -29,8 +29,15 @@ function handleSelection(event) {
       const source = settings.preferredSource || 'cambridge';
       const sourceDisplayName = getSourceDisplayName(source);
       
+      let loadingMessage;
+      if (source === 'gemini') {
+        loadingMessage = `<span>Loading definition for "<strong>${selectedText}</strong>" from <em>${sourceDisplayName}</em> with audio from <em>Cambridge</em>...</span>`;
+      } else {
+        loadingMessage = `<span>Loading definition for "<strong>${selectedText}</strong>" from <em>${sourceDisplayName}</em>...</span>`;
+      }
+      
       // Create a placeholder popup while fetching
-      createPopup(event.clientX, event.clientY, `<span>Loading definition for "<strong>${selectedText}</strong>" from <em>${sourceDisplayName}</em>...</span>`);
+      createPopup(event.clientX, event.clientY, loadingMessage);
     });
     
     // Send the selected word to the background script

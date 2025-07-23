@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Quick Definition Popup",
+  "name": "LexiLens Definitions",
   "version": "1.2",
   "description": "Instantly shows rich English definitions when you select a word.",
   "permissions": [

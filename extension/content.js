@@ -38,7 +38,25 @@ function getSourceDisplayName(source) {
 document.addEventListener('dblclick', handleSelection);
 
 function handleSelection(event) {
-  const selectedText = window.getSelection().toString().trim();
+  // Prevent default behavior that might interfere
+  event.preventDefault();
+  
+  const selection = window.getSelection();
+  const selectedText = selection.toString().trim();
+  
+  // Get the position of the selected text instead of mouse coordinates
+  let mouseX = event.clientX;
+  let mouseY = event.clientY;
+  
+  // If we have a selection, use its position
+  if (selection.rangeCount > 0) {
+    const range = selection.getRangeAt(0);
+    const rect = range.getBoundingClientRect();
+    
+    // Use the end of the selection for popup positioning
+    mouseX = rect.right;
+    mouseY = rect.bottom;
+  }
   
   // Check if selection is valid based on the source
   chrome.storage.local.get(['preferredSource'], (settings) => {
@@ -86,7 +104,7 @@ function handleSelection(event) {
     }
     
     // Create a placeholder popup while fetching
-    createPopup(event.clientX, event.clientY, loadingMessage, isSentence);
+    createPopup(mouseX, mouseY, loadingMessage, isSentence);
     
     // Send the selected text to the background script
     const messageType = isSentence ? 'translateSentence' : 'getDefinition';
@@ -234,10 +252,11 @@ function createPopup(x, y, content, isSentence = false) {
     popup.classList.add('qdp-sentence-mode');
   }
   
-  popup.style.left = `${x + window.scrollX}px`;
-  popup.style.top = `${y + window.scrollY + 15}px`; // Position below the cursor
   popup.innerHTML = content;
   document.body.appendChild(popup);
+  
+  // Position popup with better cross-site compatibility
+  positionPopup(x, y, popup);
   
   // Add listener for the audio button if it was created
   const audioButton = document.getElementById('qdp-audio-btn');
@@ -363,6 +382,58 @@ function toggleKeyPhrases() {
 
 // Make toggleKeyPhrases available globally
 window.toggleKeyPhrases = toggleKeyPhrases;
+
+// Position popup with better cross-site compatibility
+function positionPopup(mouseX, mouseY, popupElement) {
+  // Get viewport dimensions
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+  
+  // Get popup dimensions (after it's added to DOM)
+  const popupRect = popupElement.getBoundingClientRect();
+  const popupWidth = popupRect.width;
+  const popupHeight = popupRect.height;
+  
+  // Get scroll positions with fallbacks for different scroll contexts
+  const scrollX = window.pageXOffset || window.scrollX || document.documentElement.scrollLeft || 0;
+  const scrollY = window.pageYOffset || window.scrollY || document.documentElement.scrollTop || 0;
+  
+  // Calculate desired position (below and to the right of cursor)
+  let left = mouseX + scrollX;
+  let top = mouseY + scrollY + 15; // 15px below cursor
+  
+  // Adjust horizontal position if popup would go off screen
+  if (mouseX + popupWidth > viewportWidth) {
+    // Position to the left of cursor instead
+    left = mouseX + scrollX - popupWidth - 10;
+    // Ensure it doesn't go off the left edge
+    if (left < scrollX) {
+      left = scrollX + 10;
+    }
+  }
+  
+  // Adjust vertical position if popup would go off screen
+  if (mouseY + popupHeight + 15 > viewportHeight) {
+    // Position above cursor instead
+    top = mouseY + scrollY - popupHeight - 10;
+    // Ensure it doesn't go off the top edge
+    if (top < scrollY) {
+      top = scrollY + 10;
+    }
+  }
+  
+  // Apply positioning with safeguards
+  popupElement.style.position = 'absolute';
+  popupElement.style.left = `${Math.max(0, left)}px`;
+  popupElement.style.top = `${Math.max(0, top)}px`;
+  
+  // Ensure popup is visible and above other content
+  popupElement.style.zIndex = '2147483647'; // Maximum z-index
+  popupElement.style.pointerEvents = 'auto';
+  
+  // Force a reflow to ensure positioning is applied
+  popupElement.offsetHeight;
+}
 
 // Remove the popup from the page
 function removePopup() {

@@ -15,13 +15,16 @@ cd api-server
 npm install
 ```
 
-### 2. Set up Gemini API Key (Required for phrase support)
-1. Get your API key from [Google AI Studio](https://aistudio.google.com/app/apikey)  
-2. Copy `.env.example` to `.env`:
+### 2. Set up API Keys (Required for full functionality)
+1. Get your Gemini API key from [Google AI Studio](https://aistudio.google.com/app/apikey)  
+2. Get your ElevenLabs API key from [ElevenLabs](https://elevenlabs.io/speech-synthesis) (required for Text-to-Speech)
+3. Copy `.env.example` to `.env`:
    ```bash
    cp .env.example .env
    ```
-3. Edit `.env` file and replace `your_gemini_api_key_here` with your actual API key
+4. Edit `.env` file and replace the placeholder values:
+   - `your_gemini_api_key_here` with your actual Gemini API key
+   - `your_elevenlabs_api_key_here` with your actual ElevenLabs API key
 
 ### 3. Start the API Server
 ```bash
@@ -87,6 +90,11 @@ The server will run on `http://localhost:3000`
 - Make sure the API server is running (`npm start` in api-server folder)  
 - Check that your Gemini API key is correctly set in the `.env` file  
 - Verify your internet connection
+
+### Text-to-Speech not working
+- Ensure your ElevenLabs API key is correctly set in the `.env` file
+- Check that TTS is enabled in the extension options
+- Verify the API server is running and accessible
 
 ### Phrase selection not working
 - Ensure Gemini is selected as the source in extension options  

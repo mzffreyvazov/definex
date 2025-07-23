@@ -1,4 +1,4 @@
-# Semantix - Enhanced with Phrase Support
+# Semantix
 
 ## New Features
 - **Phrase Support**: When using Gemini AI source, you can now select and get definitions for phrases up to 5 words long  

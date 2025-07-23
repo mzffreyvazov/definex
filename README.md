@@ -2,6 +2,8 @@
 
 ## New Features
 - **Phrase Support**: When using Gemini AI source, you can now select and get definitions for phrases up to 5 words long
+ - **Sentence Translation**: Double-click a sentence (more than 5 words) to get a translation into your chosen target language via Gemini AI
+ - **Text-to-Speech (TTS)**: Enable audio playback for phrases and sentences directly from the popup
 - **Smart Selection**: Single words work with all sources, phrases (2-5 words) only work with Gemini
 - **Enhanced Definitions**: Gemini provides context-aware definitions for both words and phrases
 
@@ -52,6 +54,13 @@ The server will run on `http://localhost:3000`
   - "machine learning" (compound noun)
   - "piece of cake" (idiom)
   - "in spite of" (prepositional phrase)
+
+### Sentences (Gemini Only)
+- Select a sentence of more than 5 words
+- Double-click the selection
+- Only works when Gemini is selected as the source
+- The popup will show the translated sentence and key phrases
+- If Text-to-Speech is enabled, click the 🔊 button to hear the sentence spoken aloud
 
 ### Supported Phrase Types
 - Idioms ("break the ice", "spill the beans")

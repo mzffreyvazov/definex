@@ -1,4 +1,4 @@
-# LexiLens - Enhanced with Phrase Support
+# QuickDefine - Enhanced with Phrase Support
 
 ## New Features
 - **Phrase Support**: When using Gemini AI source, you can now select and get definitions for phrases up to 5 words long

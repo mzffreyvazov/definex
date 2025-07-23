@@ -22,9 +22,11 @@ npm install
    ```bash
    cp .env.example .env
    ```
-4. Edit `.env` file and replace the placeholder values:
-   - `your_gemini_api_key_here` with your actual Gemini API key
-   - `your_elevenlabs_api_key_here` with your actual ElevenLabs API key
+4. Edit `.env` file and set the following environment variables:
+   ```
+   GEMINI_API_KEY="your_actual_gemini_api_key"
+   ELEVENLABS_API_KEY="your_actual_elevenlabs_api_key"
+   ```
 
 ### 3. Start the API Server
 ```bash

@@ -95,7 +95,7 @@ function handleSelection(event) {
     
     let loadingMessage;
     if (isSentence) {
-      loadingMessage = `<span style="font-family: 'Open Sans', sans-serif;">Translating sentence "<strong>${selectedText.substring(0, 50)}${selectedText.length > 50 ? '...' : ''}</strong>" with <em>Gemini AI</em>...</span>`;
+      loadingMessage = `<span style="font-family: 'Open Sans', sans-serif;">Translating sentence "<strong>${selectedText.substring(0, 50)}${selectedText.length > 50 ? '...' : ''}</strong>" with Gemini AI...</span>`;
     } else if (source === 'gemini') {
       // Check if it's a single word or phrase for loading message
       const isPhrase = words.length > 1;
@@ -171,11 +171,11 @@ function formatData(data, ttsEnabled = false) {
   const definitionsHTML = data.definition.map(def => {
     // Generate HTML for each example within this definition
     const examplesHTML = def.example.map(ex => {
-      let exampleHTML = `<div class="qdp-example"><em>${ex.text}</em>`;
+      let exampleHTML = `<div class="qdp-example">${ex.text}`;
       
       // Add translation if available
       if (ex.translation) {
-        exampleHTML += `<div class="qdp-example-translation"> <em>${ex.translation}</em></div>`;
+        exampleHTML += `<div class="qdp-example-translation">${ex.translation}</div>`;
       }
       exampleHTML += `</div>`;
       return exampleHTML;
@@ -212,13 +212,13 @@ function formatTranslationData(data, ttsEnabled = false) {
     <div class="qdp-sentence-header">
       <div class="qdp-sentence-original">
         <span class="qdp-sentence-label">Original:</span>
-        <div class="qdp-sentence-text">"${data.originalSentence}"
+        <div class="qdp-sentence-text">${data.originalSentence}
           ${ttsEnabled ? `<button id="qdp-tts-original-btn" title="Play original sentence" data-tts-text="${data.originalSentence}">🔊</button>` : ''}
         </div>
       </div>
       <div class="qdp-sentence-translation">
         <span class="qdp-sentence-label">Translation (${data.targetLanguage}):</span>
-        <div class="qdp-sentence-text">"${data.translation}"</div>
+        <div class="qdp-sentence-text">${data.translation}</div>
       </div>
     </div>
   `;

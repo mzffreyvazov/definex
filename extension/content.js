@@ -1,4 +1,7 @@
 let popup = null;
+let selectionRange = null; // Store the selection range for sticky positioning
+let popupContent = null; // Store the popup content to recreate when scrolling back
+let isSentenceMode = false; // Track if current popup is in sentence mode
 
 // Audio cache for TTS
 const audioCache = new Map();
@@ -53,6 +56,9 @@ function handleSelection(event) {
     const range = selection.getRangeAt(0);
     const rect = range.getBoundingClientRect();
     
+    // Store the selection range for sticky positioning
+    selectionRange = range.cloneRange();
+    
     // Use the end of the selection for popup positioning
     mouseX = rect.right;
     mouseY = rect.bottom;
@@ -83,7 +89,7 @@ function handleSelection(event) {
     }
     
     // Remove existing popup if it exists
-    removePopup();
+    clearPopupData();
     
     const sourceDisplayName = getSourceDisplayName(source);
     
@@ -247,6 +253,10 @@ function createPopup(x, y, content, isSentence = false) {
   popup = document.createElement('div');
   popup.id = 'quick-def-popup';
   
+  // Store popup content and mode for persistence
+  popupContent = content;
+  isSentenceMode = isSentence;
+  
   // Add sentence class for larger width
   if (isSentence) {
     popup.classList.add('qdp-sentence-mode');
@@ -258,7 +268,21 @@ function createPopup(x, y, content, isSentence = false) {
   // Position popup with better cross-site compatibility
   positionPopup(x, y, popup);
   
-  // Add listener for the audio button if it was created
+  // Add event listeners
+  addPopupEventListeners();
+}
+
+// Update the content of the existing popup
+function updatePopupContent(content) {
+  if (popup) {
+    popup.innerHTML = content;
+    popupContent = content; // Update stored content
+    addPopupEventListeners();
+  }
+}
+
+// Add event listeners to popup elements
+function addPopupEventListeners() {
   const audioButton = document.getElementById('qdp-audio-btn');
   if(audioButton) {
       audioButton.addEventListener('click', playAudio);
@@ -274,29 +298,6 @@ function createPopup(x, y, content, isSentence = false) {
   const keyPhrasesHeader = document.getElementById('qdp-key-phrases-header');
   if (keyPhrasesHeader) {
     keyPhrasesHeader.addEventListener('click', toggleKeyPhrases);
-  }
-}
-
-// Update the content of the existing popup
-function updatePopupContent(content) {
-  if (popup) {
-    popup.innerHTML = content;
-    const audioButton = document.getElementById('qdp-audio-btn');
-    if(audioButton) {
-        audioButton.addEventListener('click', playAudio);
-    }
-    
-    // Add TTS event listeners
-    const ttsPhraseBtns = document.querySelectorAll('#qdp-tts-phrase-btn, #qdp-tts-original-btn');
-    ttsPhraseBtns.forEach(btn => {
-      btn.addEventListener('click', playTTS);
-    });
-    
-    // Add key phrases toggle listener
-    const keyPhrasesHeader = document.getElementById('qdp-key-phrases-header');
-    if (keyPhrasesHeader) {
-      keyPhrasesHeader.addEventListener('click', toggleKeyPhrases);
-    }
   }
 }
 
@@ -383,7 +384,7 @@ function toggleKeyPhrases() {
 // Make toggleKeyPhrases available globally
 window.toggleKeyPhrases = toggleKeyPhrases;
 
-// Position popup with better cross-site compatibility
+// Position popup with sticky positioning relative to selected text
 function positionPopup(mouseX, mouseY, popupElement) {
   // Get viewport dimensions
   const viewportWidth = window.innerWidth;
@@ -394,13 +395,13 @@ function positionPopup(mouseX, mouseY, popupElement) {
   const popupWidth = popupRect.width;
   const popupHeight = popupRect.height;
   
-  // Get scroll positions with fallbacks for different scroll contexts
+  // Get scroll positions to calculate absolute position
   const scrollX = window.pageXOffset || window.scrollX || document.documentElement.scrollLeft || 0;
   const scrollY = window.pageYOffset || window.scrollY || document.documentElement.scrollTop || 0;
   
-  // Calculate desired position (below and to the right of cursor)
+  // Calculate absolute position relative to document (not viewport)
   let left = mouseX + scrollX;
-  let top = mouseY + scrollY + 15; // 15px below cursor
+  let top = mouseY + scrollY + 15; // 15px below the selection
   
   // Adjust horizontal position if popup would go off screen
   if (mouseX + popupWidth > viewportWidth) {
@@ -422,7 +423,7 @@ function positionPopup(mouseX, mouseY, popupElement) {
     }
   }
   
-  // Apply positioning with safeguards
+  // Apply absolute positioning for document-relative positioning
   popupElement.style.position = 'absolute';
   popupElement.style.left = `${Math.max(0, left)}px`;
   popupElement.style.top = `${Math.max(0, top)}px`;
@@ -440,12 +441,64 @@ function removePopup() {
   if (popup) {
     popup.remove();
     popup = null;
+    // Don't clear selectionRange, popupContent, or isSentenceMode here
+    // so we can recreate the popup when scrolling back
   }
 }
+
+// Completely clear popup data (for new selections or manual dismissal)
+function clearPopupData() {
+  removePopup();
+  selectionRange = null;
+  popupContent = null;
+  isSentenceMode = false;
+}
+
+// Update popup position based on selection range (for sticky behavior)
+function updatePopupPosition() {
+  if (selectionRange && popupContent) {
+    try {
+      const rect = selectionRange.getBoundingClientRect();
+      
+      // Check if the selected text is still visible in the viewport
+      const viewportHeight = window.innerHeight;
+      const viewportWidth = window.innerWidth;
+      
+      // If the selection is completely out of view, hide the popup
+      if (rect.bottom < 0 || rect.top > viewportHeight || 
+          rect.right < 0 || rect.left > viewportWidth) {
+        if (popup) {
+          console.log('Selection scrolled out of view, hiding popup');
+          removePopup(); // This only removes the DOM element, keeps data
+        }
+        return;
+      }
+      
+      // If selection is visible but popup doesn't exist, recreate it
+      if (!popup) {
+        console.log('Selection scrolled back into view, recreating popup');
+        createPopup(rect.right, rect.bottom, popupContent, isSentenceMode);
+        return;
+      }
+      
+      // If selection is visible and popup exists, just reposition it
+      positionPopup(rect.right, rect.bottom, popup);
+    } catch (error) {
+      // If the range is no longer valid (e.g., DOM changed), clear all data
+      console.log('Selection range no longer valid, clearing popup data');
+      clearPopupData();
+    }
+  }
+}
+
+// Listen for scroll events to maintain sticky positioning
+window.addEventListener('scroll', updatePopupPosition, { passive: true });
+// Also listen for resize events in case viewport changes
+window.addEventListener('resize', updatePopupPosition, { passive: true });
 
 // Close the popup if user clicks anywhere else on the page
 document.addEventListener('click', (event) => {
   if (popup && !popup.contains(event.target)) {
-    removePopup();
+    clearPopupData(); // Completely clear when user clicks away
   }
 });

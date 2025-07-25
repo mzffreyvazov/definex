@@ -1,55 +1,166 @@
 const cheerio = require("cheerio");
-const request = require("request");
 const express = require("express");
 const axios = require("axios");
 const app = express();
 const cors = require("cors");
 
-const fetchVerbs = (wiki) => {
-  return new Promise((resolve, reject) => {
-    axios
-      .get(wiki)
-      .then((response) => {
-        const $$ = cheerio.load(response.data);
-        const verb = $$("tr > td > p ").text();
+// In-memory cache for dictionary and verb data
+const cache = new Map();
+const CACHE_TTL = 60 * 60 * 1000; // 1 hour in milliseconds
+const MAX_CACHE_SIZE = 1000; // Maximum number of cached entries
 
-        const lines = verb
-          .split("\n")
-          .map((line) => line.trim())
-          .filter(Boolean);
+// Cache management functions
+const getCacheKey = (type, language, entry) => `${type}:${language}:${entry.toLowerCase()}`;
 
-        const verbs = [];
-        for (let i = 0; i < lines.length; i += 2) {
-          if (verbs.includes({ type: lines[i], text: lines[i + 1] })) {
-            break;
-          }
-          const type = lines[i];
-          const text = lines[i + 1];
-          if (type && text) {
-            verbs.push({ id: verbs.length, type, text });
-          } else {
-            verbs.push();
-          }
-        }
-        resolve(verbs);
-      })
-      .catch((error) => {
-        resolve();
-      });
+const getCachedData = (key) => {
+  const cached = cache.get(key);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached.data;
+  }
+  if (cached) {
+    cache.delete(key); // Remove expired entry
+  }
+  return null;
+};
+
+const setCachedData = (key, data) => {
+  // Implement LRU eviction when cache is full
+  if (cache.size >= MAX_CACHE_SIZE) {
+    const oldestKey = cache.keys().next().value;
+    cache.delete(oldestKey);
+  }
+  
+  cache.set(key, {
+    data: data,
+    timestamp: Date.now()
   });
 };
 
-app.use(cors({ origin: "*" }));
+const getCacheStats = () => ({
+  size: cache.size,
+  maxSize: MAX_CACHE_SIZE,
+  ttl: CACHE_TTL / 1000 / 60, // TTL in minutes
+});
+
+// Utility function to add delay between requests
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Utility function to make requests with retry logic
+const makeRequestWithRetry = async (url, config, maxRetries = 2) => {
+  for (let attempt = 1; attempt <= maxRetries + 1; attempt++) {
+    try {
+      if (attempt > 1) {
+        // Add exponential backoff delay for retries
+        const delayMs = Math.min(1000 * Math.pow(2, attempt - 2), 5000);
+        console.log(`Retry attempt ${attempt - 1} after ${delayMs}ms delay`);
+        await delay(delayMs);
+      }
+      
+      const response = await axios.get(url, config);
+      return response;
+    } catch (error) {
+      console.log(`Request attempt ${attempt} failed:`, error.message);
+      
+      if (attempt === maxRetries + 1 || 
+          (error.response && error.response.status >= 400 && error.response.status < 500)) {
+        // Don't retry for client errors (4xx) or if we've exhausted all retries
+        throw error;
+      }
+    }
+  }
+};
+
+const fetchVerbs = async (wiki, entry) => {
+  const cacheKey = getCacheKey('verbs', 'wiki', entry);
+  
+  // Check cache first
+  const cachedVerbs = getCachedData(cacheKey);
+  if (cachedVerbs) {
+    console.log(`Cache HIT for verbs: ${entry}`);
+    return cachedVerbs;
+  }
+
+  console.log(`Cache MISS for verbs: ${entry} - fetching from Wiktionary`);
+  
+  try {
+    const config = {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'DNT': '1',
+        'Connection': 'keep-alive'
+      },
+      timeout: 8000
+    };
+
+    const response = await makeRequestWithRetry(wiki, config, 1); // Less retries for secondary data
+    const $$ = cheerio.load(response.data);
+    const verb = $$("tr > td > p ").text();
+
+    const lines = verb
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean);
+
+    const verbs = [];
+    for (let i = 0; i < lines.length; i += 2) {
+      if (verbs.includes({ type: lines[i], text: lines[i + 1] })) {
+        break;
+      }
+      const type = lines[i];
+      const text = lines[i + 1];
+      if (type && text) {
+        verbs.push({ id: verbs.length, type, text });
+      } else {
+        verbs.push();
+      }
+    }
+    
+    // Cache the result
+    setCachedData(cacheKey, verbs);
+    
+    return verbs;
+  } catch (error) {
+    console.log('Error fetching verbs from Wiktionary:', error.message);
+    return []; // Return empty array instead of undefined
+  }
+};
+
+// Enhanced CORS configuration
+app.use(cors({
+  origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : '*',
+  credentials: true,
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['X-Cache-Status', 'X-Response-Time', 'X-Rate-Limit-Remaining'],
+  maxAge: 86400 // 24 hours preflight cache
+}));
+
 app.use(express.json()); // Add JSON body parser middleware
+
+// Cache status endpoint
+app.get("/api/cache/stats", (req, res) => {
+  res.json(getCacheStats());
+});
+
+// Cache clear endpoint (for development/debugging)
+app.get("/api/cache/clear", (req, res) => {
+  cache.clear();
+  res.json({ message: "Cache cleared successfully", stats: getCacheStats() });
+});
 
 app.get("/", (req, res) => {
   res.sendFile(__dirname + "/index.html");
 });
 
-app.get("/api/dictionary/:language/:entry", (req, res, next) => {
+app.get("/api/dictionary/:language/:entry", async (req, res, next) => {
+  const startTime = Date.now();
   const entry = req.params.entry;
   const slugLanguage = req.params.language;
   let nation = "us";
+  let language;
 
   if (slugLanguage === "en") {
     language = "english";
@@ -62,151 +173,247 @@ app.get("/api/dictionary/:language/:entry", (req, res, next) => {
     language = "english-chinese-simplified";
   }
 
+  // Check cache first
+  const cacheKey = getCacheKey('dictionary', slugLanguage, entry);
+  const cachedResult = getCachedData(cacheKey);
+  
+  if (cachedResult) {
+    const responseTime = Date.now() - startTime;
+    console.log(`Cache HIT for dictionary: ${slugLanguage}/${entry} (${responseTime}ms)`);
+    
+    res.set({
+      'X-Cache-Status': 'HIT',
+      'X-Response-Time': `${responseTime}ms`
+    });
+    
+    return res.status(200).json(cachedResult);
+  }
+
+  console.log(`Cache MISS for dictionary: ${slugLanguage}/${entry} - fetching from Cambridge`);
+
   const url = `https://dictionary.cambridge.org/${nation}/dictionary/${language}/${entry}`;
-  request(url, async (error, response, html) => {
-    if (!error && response.statusCode == 200) {
-      const $ = cheerio.load(html);
-      const siteurl = "https://dictionary.cambridge.org";
-      const wiki = `https://simple.wiktionary.org/wiki/${entry}`;
+  
+  try {
+    // Configure axios to appear more like a real browser request
+    const config = {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'DNT': '1',
+        'Connection': 'keep-alive',
+        'Upgrade-Insecure-Requests': '1',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'none',
+        'Sec-Fetch-User': '?1',
+        'sec-ch-ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+        'sec-ch-ua-mobile': '?0',
+        'sec-ch-ua-platform': '"Windows"'
+      },
+      timeout: 10000, // 10 second timeout
+      maxRedirects: 5,
+      validateStatus: function (status) {
+        return status >= 200 && status < 300; // Only resolve for 2xx status codes
+      }
+    };
 
-      // get verbs
+    const response = await makeRequestWithRetry(url, config, 2);
+    const html = response.data;
+    
+    const $ = cheerio.load(html);
+    const siteurl = "https://dictionary.cambridge.org";
+    const wiki = `https://simple.wiktionary.org/wiki/${entry}`;
 
-      const verbs = await fetchVerbs(wiki);
+    // Add small delay before making secondary request
+    await delay(500);
 
-      // basic
+    // get verbs
+    const verbs = await fetchVerbs(wiki, entry);
 
-      const word = $(".hw.dhw").first().text();
-      const getPos = $(".pos.dpos") // part of speech
-        .map((index, element) => {
-          return $(element).text();
-        })
-        .get();
-      const pos = getPos.filter(
-        (item, index) => getPos.indexOf(item) === index,
+    // basic
+
+    const word = $(".hw.dhw").first().text();
+    const getPos = $(".pos.dpos") // part of speech
+      .map((index, element) => {
+        return $(element).text();
+      })
+      .get();
+    const pos = getPos.filter(
+      (item, index) => getPos.indexOf(item) === index,
+    );
+
+    // Phonetics audios
+    const audio = [];
+    for (const s of $(".pos-header.dpos-h")) {
+      const posNode = s.childNodes.find(
+        (c) =>
+          c.attribs && c.attribs.class && c.attribs.class.includes("dpos-g"),
       );
-
-      // Phonetics audios
-      const audio = [];
-      for (const s of $(".pos-header.dpos-h")) {
-        const posNode = s.childNodes.find(
-          (c) =>
-            c.attribs && c.attribs.class && c.attribs.class.includes("dpos-g"),
+      if (!posNode || posNode.childNodes.length === 0) continue;
+      const p = $(posNode.childNodes[0]).text();
+      const nodes = s.childNodes.filter(
+        (c) =>
+          c.name === "span" &&
+          c.attribs &&
+          c.attribs.class &&
+          c.attribs.class.includes("dpron-i"),
+      );
+      if (nodes.length === 0) continue;
+      for (const node of nodes) {
+        if (node.childNodes.length < 3) continue;
+        const lang = $(node.childNodes[0]).text();
+        const aud = node.childNodes[1].childNodes.find(
+          (c) => c.name === "audio",
         );
-        if (!posNode || posNode.childNodes.length === 0) continue;
-        const p = $(posNode.childNodes[0]).text();
-        const nodes = s.childNodes.filter(
-          (c) =>
-            c.name === "span" &&
-            c.attribs &&
-            c.attribs.class &&
-            c.attribs.class.includes("dpron-i"),
-        );
-        if (nodes.length === 0) continue;
-        for (const node of nodes) {
-          if (node.childNodes.length < 3) continue;
-          const lang = $(node.childNodes[0]).text();
-          const aud = node.childNodes[1].childNodes.find(
-            (c) => c.name === "audio",
-          );
-          if (!aud) continue;
-          const src = aud.childNodes.find((c) => c.name === "source");
-          if (!src) continue;
-          const url = siteurl + $(src).attr("src");
-          const pron = $(node.childNodes[2]).text();
-          audio.push({ pos: p, lang: lang, url: url, pron: pron });
-        }
-      }
-
-      // definition & example
-      const exampleCount = $(".def-body.ddef_b")
-        .map((index, element) => {
-          const exampleElements = $(element).find(".examp.dexamp");
-          return exampleElements.length;
-        })
-        .get();
-      for (let i = 0; i < exampleCount.length; i++) {
-        if (i == 0) {
-          exampleCount[i] = exampleCount[i];
-        } else {
-          exampleCount[i] = exampleCount[i] + exampleCount[i - 1];
-        }
-      }
-
-      const exampletrans = $(
-        ".examp.dexamp > .trans.dtrans.dtrans-se.hdb.break-cj",
-      ); // translation of the example
-      const example = $(".examp.dexamp > .eg.deg")
-        .map((index, element) => {
-          return {
-            id: index,
-            text: $(element).text(),
-            translation: exampletrans.eq(index).text(),
-          };
-        })
-        .get();
-
-      const source = (element) => {
-        const defElement = $(element);
-        const parentElement = defElement.closest(".pr.dictionary");
-        const dataId = parentElement.attr("data-id");
-        return dataId;
-      };
-
-      const defPos = (element) => {
-        const defElement = $(element);
-        const partOfSpeech = defElement
-          .closest(".pr.entry-body__el")
-          .find(".pos.dpos")
-          .first()
-          .text(); // Get the part of speech
-        return partOfSpeech;
-      };
-
-      const getExample = (element) => {
-        const ex = $(element)
-          .find(".def-body.ddef_b > .examp.dexamp")
-          .map((index, element) => {
-            return {
-              id: index,
-              text: $(element).find(".eg.deg").text(),
-              translation: $(element).find(".trans.dtrans").text(),
-            };
-          });
-        return ex.get();
-      };
-
-      const definition = $(".def-block.ddef_block")
-        .map((index, element) => {
-          return {
-            id: index,
-            pos: defPos(element),
-            source: source(element),
-            text: $(element).find(".def.ddef_d.db").text(),
-            translation: $(element)
-              .find(".def-body.ddef_b > span.trans.dtrans")
-              .text(),
-            example: getExample(element),
-          };
-        })
-        .get();
-
-      // api response
-
-      if (word === "") {
-        res.status(404).json({
-          error: "word not found",
-        });
-      } else {
-        res.status(200).json({
-          word: word,
-          pos: pos,
-          verbs: verbs,
-          pronunciation: audio,
-          definition: definition,
-        });
+        if (!aud) continue;
+        const src = aud.childNodes.find((c) => c.name === "source");
+        if (!src) continue;
+        const url = siteurl + $(src).attr("src");
+        const pron = $(node.childNodes[2]).text();
+        audio.push({ pos: p, lang: lang, url: url, pron: pron });
       }
     }
-  });
+
+    // definition & example
+    const exampleCount = $(".def-body.ddef_b")
+      .map((index, element) => {
+        const exampleElements = $(element).find(".examp.dexamp");
+        return exampleElements.length;
+      })
+      .get();
+    for (let i = 0; i < exampleCount.length; i++) {
+      if (i == 0) {
+        exampleCount[i] = exampleCount[i];
+      } else {
+        exampleCount[i] = exampleCount[i] + exampleCount[i - 1];
+      }
+    }
+
+    const exampletrans = $(
+      ".examp.dexamp > .trans.dtrans.dtrans-se.hdb.break-cj",
+    ); // translation of the example
+    const example = $(".examp.dexamp > .eg.deg")
+      .map((index, element) => {
+        return {
+          id: index,
+          text: $(element).text(),
+          translation: exampletrans.eq(index).text(),
+        };
+      })
+      .get();
+
+    const source = (element) => {
+      const defElement = $(element);
+      const parentElement = defElement.closest(".pr.dictionary");
+      const dataId = parentElement.attr("data-id");
+      return dataId;
+    };
+
+    const defPos = (element) => {
+      const defElement = $(element);
+      const partOfSpeech = defElement
+        .closest(".pr.entry-body__el")
+        .find(".pos.dpos")
+        .first()
+        .text(); // Get the part of speech
+      return partOfSpeech;
+    };
+
+    const getExample = (element) => {
+      const ex = $(element)
+        .find(".def-body.ddef_b > .examp.dexamp")
+        .map((index, element) => {
+          return {
+            id: index,
+            text: $(element).find(".eg.deg").text(),
+            translation: $(element).find(".trans.dtrans").text(),
+          };
+        });
+      return ex.get();
+    };
+
+    const definition = $(".def-block.ddef_block")
+      .map((index, element) => {
+        return {
+          id: index,
+          pos: defPos(element),
+          source: source(element),
+          text: $(element).find(".def.ddef_d.db").text(),
+          translation: $(element)
+            .find(".def-body.ddef_b > span.trans.dtrans")
+            .text(),
+          example: getExample(element),
+        };
+      })
+      .get();
+
+    // api response
+    const responseTime = Date.now() - startTime;
+
+    if (word === "") {
+      res.set({
+        'X-Cache-Status': 'MISS',
+        'X-Response-Time': `${responseTime}ms`
+      });
+      res.status(404).json({
+        error: "word not found",
+      });
+    } else {
+      const result = {
+        word: word,
+        pos: pos,
+        verbs: verbs,
+        pronunciation: audio,
+        definition: definition,
+      };
+
+      // Cache the successful result
+      setCachedData(cacheKey, result);
+      
+      console.log(`Dictionary data cached for: ${slugLanguage}/${entry} (${responseTime}ms)`);
+      
+      res.set({
+        'X-Cache-Status': 'MISS',
+        'X-Response-Time': `${responseTime}ms`
+      });
+      
+      res.status(200).json(result);
+    }
+  } catch (error) {
+    const responseTime = Date.now() - startTime;
+    console.error("Error fetching dictionary data:", error.message);
+    
+    res.set({
+      'X-Cache-Status': 'ERROR',
+      'X-Response-Time': `${responseTime}ms`
+    });
+    
+    // Handle specific error types
+    if (error.code === 'ERR_BAD_RESPONSE') {
+      console.error(`HTTP Error: ${error.response?.status} - ${error.response?.statusText}`);
+      res.status(503).json({
+        error: "Dictionary service temporarily unavailable",
+        details: "The dictionary website may be blocking automated requests or experiencing issues"
+      });
+    } else if (error.code === 'ECONNABORTED') {
+      res.status(408).json({
+        error: "Request timeout",
+        details: "The dictionary service took too long to respond"
+      });
+    } else if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
+      res.status(503).json({
+        error: "Dictionary service unavailable",
+        details: "Cannot connect to the dictionary service"
+      });
+    } else {
+      res.status(500).json({
+        error: "Failed to fetch dictionary data",
+        details: "An unexpected error occurred while processing your request"
+      });
+    }
+  }
 });
 // --- ADD THIS ENTIRE BLOCK TO data.js ---
 

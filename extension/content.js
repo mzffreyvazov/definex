@@ -129,6 +129,12 @@ function handleSelection(event) {
         const ttsEnabled = response.ttsEnabled || false;
         const content = isSentence ? formatTranslationData(response.data, ttsEnabled) : formatData(response.data, ttsEnabled);
         updatePopupContent(content);
+      } else if (response.status === 'noLanguage') {
+        // Show message to configure target language in options
+        updatePopupContent(`<div style="padding: 20px; text-align: center; font-family: 'Open Sans', sans-serif; line-height: 1.5;">
+          <div style="font-size: 16px; font-weight: 600; color: #dc3545; margin-bottom: 12px;">⚠️ No Target Language Selected</div>
+          <div style="font-size: 14px; color: #666;">${response.message}</div>
+        </div>`);
       } else {
         updatePopupContent(`Error: ${response.message || (isSentence ? 'Translation failed.' : 'Definition not found.')}`);
       }

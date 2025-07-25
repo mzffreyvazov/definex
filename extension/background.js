@@ -183,7 +183,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     const sentence = message.text;
 
     chrome.storage.local.get(['targetLanguage', 'ttsEnabled'], (settings) => {
-      const targetLanguage = settings.targetLanguage || 'Spanish'; // Default to Spanish
+      const targetLanguage = settings.targetLanguage;
+      
+      // Check if no target language is set
+      if (!targetLanguage || targetLanguage === 'none') {
+        sendResponse({ status: 'noLanguage', message: 'Please select a target language in options setting to proceed' });
+        return;
+      }
+      
       // Use a more robust encoding method that handles Unicode characters
       const encodedSentence = encodeURIComponent(sentence).replace(/[!'()*]/g, function(c) {
         return '%' + c.charCodeAt(0).toString(16);

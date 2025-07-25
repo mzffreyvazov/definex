@@ -171,7 +171,7 @@ function formatData(data, ttsEnabled = false) {
   const definitionsHTML = data.definition.map(def => {
     // Generate HTML for each example within this definition
     const examplesHTML = def.example.map(ex => {
-      let exampleHTML = `<div class="qdp-example">e.g., "<em>${ex.text}</em>"`;
+      let exampleHTML = `<div class="qdp-example"><em>${ex.text}</em>`;
       
       // Add translation if available
       if (ex.translation) {

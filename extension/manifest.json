@@ -5,7 +5,8 @@
   "description": "Instantly shows rich English definitions when you select a word.",
   "permissions": [
     "activeTab",
-    "storage"
+    "storage",
+    "scripting"
   ],
   "host_permissions": [
     "http://localhost:3000/*",
@@ -29,6 +30,7 @@
     }
   ],
   "action": {
-    "default_title": "Semantix"
+    "default_title": "Semantix",
+    "default_popup": "popup.html"
   }
 }

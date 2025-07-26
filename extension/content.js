@@ -1,3 +1,50 @@
+// Check if extension is enabled for this site before setting up event listeners
+chrome.storage.local.get('enabledSites', (data) => {
+    const enabledSites = data.enabledSites || [];
+    const currentSite = window.location.hostname;
+
+    if (enabledSites.includes(currentSite)) {
+        // Only add event listeners if the site is enabled
+        document.addEventListener('dblclick', handleSelection);
+        window.addEventListener('scroll', updatePopupPosition, { passive: true });
+        window.addEventListener('resize', updatePopupPosition, { passive: true });
+        document.addEventListener('click', (event) => {
+            if (popup && !popup.contains(event.target)) {
+                clearPopupData();
+            }
+        });
+    }
+});
+
+// Listen for site toggle messages from popup
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.type === 'siteToggle') {
+        if (message.enabled) {
+            // Enable the extension on this site
+            document.addEventListener('dblclick', handleSelection);
+            window.addEventListener('scroll', updatePopupPosition, { passive: true });
+            window.addEventListener('resize', updatePopupPosition, { passive: true });
+            document.addEventListener('click', (event) => {
+                if (popup && !popup.contains(event.target)) {
+                    clearPopupData();
+                }
+            });
+        } else {
+            // Disable the extension on this site
+            document.removeEventListener('dblclick', handleSelection);
+            window.removeEventListener('scroll', updatePopupPosition);
+            window.removeEventListener('resize', updatePopupPosition);
+            document.removeEventListener('click', (event) => {
+                if (popup && !popup.contains(event.target)) {
+                    clearPopupData();
+                }
+            });
+            // Clear any existing popup
+            clearPopupData();
+        }
+    }
+});
+
 let popup = null;
 let selectionRange = null; // Store the selection range for sticky positioning
 let popupContent = null; // Store the popup content to recreate when scrolling back
@@ -36,9 +83,6 @@ function getSourceDisplayName(source) {
       return 'Cambridge Dictionary';
   }
 }
-
-// Listen for double-clicks on the page
-document.addEventListener('dblclick', handleSelection);
 
 function handleSelection(event) {
   // Prevent default behavior that might interfere
@@ -497,14 +541,5 @@ function updatePopupPosition() {
   }
 }
 
-// Listen for scroll events to maintain sticky positioning
-window.addEventListener('scroll', updatePopupPosition, { passive: true });
-// Also listen for resize events in case viewport changes
-window.addEventListener('resize', updatePopupPosition, { passive: true });
-
-// Close the popup if user clicks anywhere else on the page
-document.addEventListener('click', (event) => {
-  if (popup && !popup.contains(event.target)) {
-    clearPopupData(); // Completely clear when user clicks away
-  }
-});
+// Note: Event listeners are conditionally added at the beginning of the file
+// based on whether the site is enabled in the extension settings

@@ -3,6 +3,9 @@
   "name": "Semantix",
   "version": "1.2",
   "description": "Instantly shows rich English definitions when you select a word.",
+  "icons": {
+    "128": "icons/final.png"
+  },
   "permissions": [
     "activeTab",
     "storage",
@@ -31,6 +34,12 @@
   ],
   "action": {
     "default_title": "Semantix",
-    "default_popup": "popup.html"
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/final.png",
+      "32": "icons/final.png",
+      "48": "icons/final.png",
+      "128": "icons/final.png"
+    }
   }
 }

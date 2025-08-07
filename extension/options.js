@@ -8,20 +8,20 @@ const sourceDescriptions = {
 // Show/hide API key sections and translation section based on selected source
 function updateSourceUI() {
   const source = document.getElementById('source').value;
-  const apiSection = document.getElementById('mw-api-section');
-  const geminiSection = document.getElementById('gemini-api-section');
+  const mwApiSection = document.getElementById('mw-api-section');
+  const geminiApiSection = document.getElementById('gemini-api-section');
   const translationSection = document.getElementById('translation-section');
   const description = document.getElementById('source-description');
   
   description.textContent = sourceDescriptions[source];
   
   // MW key
-  if (source === 'merriam-webster') apiSection.classList.remove('hidden');
-  else apiSection.classList.add('hidden');
+  if (source === 'merriam-webster') mwApiSection.classList.remove('hidden');
+  else mwApiSection.classList.add('hidden');
   
   // Gemini key
-  if (source === 'gemini') geminiSection.classList.remove('hidden');
-  else geminiSection.classList.add('hidden');
+  if (source === 'gemini') geminiApiSection.classList.remove('hidden');
+  else geminiApiSection.classList.add('hidden');
   
   // Translation only for Gemini
   if (source === 'gemini') translationSection.classList.remove('hidden');

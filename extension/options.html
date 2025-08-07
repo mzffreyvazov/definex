@@ -133,22 +133,28 @@
         }
 
         /* Settings Section Styles */
-        .settings-group {
+        .words-container {
             background-color: #ffffff;
             border: 1px solid #e2e8f0;
             border-radius: 12px;
-            padding: 32px;
-            margin-bottom: 24px;
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            overflow: hidden;
         }
 
-        .settings-group-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: #1e293b;
-            margin-bottom: 20px;
-            padding-bottom: 12px;
-            border-bottom: 2px solid #3b82f6;
+        .words-header {
+            padding: 20px 24px;
+            background-color: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .words-count {
+            font-size: 12px;
+            color: #3b82f6;
+            background: #eff6ff;
+            padding: 4px 8px;
+            border-radius: 4px;
         }
 
         .form-group {
@@ -211,27 +217,6 @@
         }
 
         /* Saved Words Section */
-        .words-container {
-            background-color: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            overflow: hidden;
-        }
-
-        .words-header {
-            padding: 20px 24px;
-            background-color: #f8fafc;
-            border-bottom: 1px solid #e2e8f0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .words-count {
-            font-size: 14px;
-            color: #64748b;
-        }
-
         .search-box {
             padding: 16px 24px;
             border-bottom: 1px solid #e2e8f0;
@@ -374,20 +359,6 @@
             margin-bottom: 20px;
         }
 
-        .api-key-section {
-            background: #f8f9fa;
-            border: 1px solid #e9ecef;
-            border-radius: 8px;
-            padding: 20px;
-            margin-top: 8px;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.03);
-        }
-
-        .api-key-section.hidden {
-            display: none;
-        }
-
         .hidden {
             display: none;
         }
@@ -482,106 +453,120 @@
                 
                 <div class="content-body">
                     <form id="optionsForm">
-                        <div class="settings-group">
-                            <h3 class="settings-group-title">Dictionary Source</h3>
-                            
-                            <div class="form-group">
-                                <label for="source">Choose your preferred dictionary:</label>
-                                <select id="source">
-                                    <option value="cambridge">Cambridge Dictionary</option>
-                                    <option value="merriam-webster">Merriam-Webster</option>
-                                    <option value="gemini">Gemini AI</option>
-                                </select>
-                                <div id="source-description" class="info-box"></div>
+                        <div class="words-container" style="margin-bottom: 24px;">
+                            <div class="words-header">
+                                <h3>Dictionary Source</h3>
                             </div>
+                            
+                            <div style="padding: 24px;">
+                                <div class="form-group">
+                                    <label for="source">Choose your preferred dictionary:</label>
+                                    <select id="source">
+                                        <option value="cambridge">Cambridge Dictionary</option>
+                                        <option value="merriam-webster">Merriam-Webster</option>
+                                        <option value="gemini">Gemini AI</option>
+                                    </select>
+                                    <div id="source-description" style="font-size: 13px; color: #64748b; margin-top: 8px;"></div>
+                                </div>
 
-                            <div class="form-group">
-                                <div id="mw-api-section" class="api-key-section hidden">
-                                    <label for="mw-key">Merriam-Webster API Key:</label>
-                                    <input type="password" id="mw-key" placeholder="Enter your API key here">
-                                    <div class="info-box">
-                                        Get your free API key from <a href="https://dictionaryapi.com/" target="_blank">dictionaryapi.com</a>.
+                                <div class="form-group">
+                                    <div id="mw-api-section" class="hidden">
+                                        <label for="mw-key">Merriam-Webster API Key:</label>
+                                        <input type="password" id="mw-key" placeholder="Enter your API key here">
+                                        <div style="font-size: 13px; color: #64748b; margin-top: 8px;">
+                                            Get your free API key from <a href="https://dictionaryapi.com/" target="_blank" style="color: #3b82f6;">dictionaryapi.com</a>.
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <div id="gemini-api-section" class="hidden">
+                                        <label for="gemini-key">Gemini AI API Key:</label>
+                                        <input type="password" id="gemini-key" placeholder="Enter your Gemini API key here">
+                                        <div style="font-size: 13px; color: #64748b; margin-top: 8px;">
+                                            Enter your Gemini AI API key provided by your AI service.
+                                        </div>
                                     </div>
                                 </div>
                             </div>
+                        </div>
+
+                        <div class="words-container" id="translation-section" style="margin-bottom: 24px;">
+                            <div class="words-header">
+                                <h3>Translation Options</h3>
+                                <span style="font-size: 12px; color: #3b82f6; background: #eff6ff; padding: 4px 8px; border-radius: 4px;">AI only</span>
+                            </div>
                             
-                            <div class="form-group">
-                                <div id="gemini-api-section" class="api-key-section hidden">
-                                    <label for="gemini-key">Gemini AI API Key:</label>
-                                    <input type="password" id="gemini-key" placeholder="Enter your Gemini API key here">
-                                    <div class="info-box">
-                                        Enter your Gemini AI API key provided by your AI service.
+                            <div style="padding: 24px;">
+                                <div class="form-group">
+                                    <label for="target-language">Translate to:</label>
+                                    <select id="target-language">
+                                        <option value="none">No Translation (Default)</option>
+                                        <option value="Spanish">Spanish</option>
+                                        <option value="French">French</option>
+                                        <option value="German">German</option>
+                                        <option value="Italian">Italian</option>
+                                        <option value="Portuguese">Portuguese</option>
+                                        <option value="Russian">Russian</option>
+                                        <option value="Turkish">Turkish</option>
+                                        <option value="Azerbaijani">Azerbaijani</option>
+                                        <option value="Japanese">Japanese</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="words-container" style="margin-bottom: 24px;">
+                            <div class="words-header">
+                                <h3>Display Options</h3>
+                            </div>
+                            
+                            <div style="padding: 24px;">
+                                <div class="form-group">
+                                    <label for="definition-scope">Definition Scope:</label>
+                                    <select id="definition-scope">
+                                        <option value="relevant">Show only the most relevant definition</option>
+                                        <option value="all">Show definitions for all parts of speech</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="example-count">Number of Example Sentences (per definition):</label>
+                                    <select id="example-count">
+                                        <option value="0">0</option>
+                                        <option value="1">1 (Default)</option>
+                                        <option value="2">2</option>
+                                        <option value="3">3</option>
+                                        <option value="4">4</option>
+                                        <option value="5">5</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="words-container" style="margin-bottom: 32px;">
+                            <div class="words-header">
+                                <h3>Text-to-Speech Options</h3>
+                            </div>
+                            
+                            <div style="padding: 24px;">
+                                <div class="form-group">
+                                    <label for="tts-enabled">
+                                        <input type="checkbox" id="tts-enabled" style="margin-right: 8px;">
+                                        Enable Text-to-Speech (TTS) for phrases and sentences
+                                    </label>
+                                    <div style="font-size: 13px; color: #64748b; margin-top: 8px;">
+                                        When enabled, TTS button will appear for original phrases and sentences, allowing you to hear them spoken aloud.
                                     </div>
                                 </div>
-                            </div>
-                        </div>
 
-                        <div class="settings-group" id="translation-section">
-                            <h3 class="settings-group-title">Translation Options</h3>
-                            <div class="info-box warning">
-                                Translation features are only available when using Gemini AI as your dictionary source.
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="target-language">Translate to:</label>
-                                <select id="target-language">
-                                    <option value="none">No Translation (Default)</option>
-                                    <option value="Spanish">Spanish</option>
-                                    <option value="French">French</option>
-                                    <option value="German">German</option>
-                                    <option value="Italian">Italian</option>
-                                    <option value="Portuguese">Portuguese</option>
-                                    <option value="Russian">Russian</option>
-                                    <option value="Turkish">Turkish</option>
-                                    <option value="Azerbaijani">Azerbaijani</option>
-                                    <option value="Japanese">Japanese</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="settings-group">
-                            <h3 class="settings-group-title">Display Options</h3>
-                            
-                            <div class="form-group">
-                                <label for="definition-scope">Definition Scope:</label>
-                                <select id="definition-scope">
-                                    <option value="relevant">Show only the most relevant definition</option>
-                                    <option value="all">Show definitions for all parts of speech</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="example-count">Number of Example Sentences (per definition):</label>
-                                <select id="example-count">
-                                    <option value="0">0</option>
-                                    <option value="1">1 (Default)</option>
-                                    <option value="2">2</option>
-                                    <option value="3">3</option>
-                                    <option value="4">4</option>
-                                    <option value="5">5</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="settings-group">
-                            <h3 class="settings-group-title">Text-to-Speech Options</h3>
-                            
-                            <div class="form-group">
-                                <label for="tts-enabled">
-                                    <input type="checkbox" id="tts-enabled" style="margin-right: 8px;">
-                                    Enable Text-to-Speech (TTS) for phrases and sentences
-                                </label>
-                                <div class="info-box">
-                                    When enabled, TTS button will appear for original phrases and sentences, allowing you to hear them spoken aloud.
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <div id="elevenlabs-api-section" class="api-key-section hidden">
-                                    <label for="elevenlabs-key">ElevenLabs API Key:</label>
-                                    <input type="password" id="elevenlabs-key" placeholder="Enter your ElevenLabs API key here">
-                                    <div class="info-box">
-                                        Get your API key from <a href="https://elevenlabs.io/" target="_blank">elevenlabs.io</a> to enable high-quality text-to-speech.
+                                <div class="form-group">
+                                    <div id="elevenlabs-api-section" class="hidden">
+                                        <label for="elevenlabs-key">ElevenLabs API Key:</label>
+                                        <input type="password" id="elevenlabs-key" placeholder="Enter your ElevenLabs API key here">
+                                        <div style="font-size: 13px; color: #64748b; margin-top: 8px;">
+                                            Get your API key from <a href="https://elevenlabs.io/" target="_blank" style="color: #3b82f6;">elevenlabs.io</a> to enable high-quality text-to-speech.
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -689,19 +674,24 @@
                 </div>
                 
                 <div class="content-body">
-                    <div class="settings-group">
-                        <h3 class="settings-group-title">Semantix Dictionary Extension</h3>
-                        <p><strong>Version:</strong> 1.0.0</p>
-                        <p><strong>Description:</strong> A powerful dictionary and translation tool that helps you understand words and phrases while browsing the web.</p>
+                    <div class="words-container">
+                        <div class="words-header">
+                            <h3>Semantix Dictionary Extension</h3>
+                        </div>
                         
-                        <h4 style="margin-top: 24px; margin-bottom: 12px;">Features:</h4>
-                        <ul style="margin-left: 20px; color: #64748b;">
-                            <li>AI-powered definitions and translations</li>
-                            <li>Support for multiple languages</li>
-                            <li>Save words for later review</li>
-                            <li>Export your vocabulary data</li>
-                            <li>Customizable popup positioning</li>
-                        </ul>
+                        <div style="padding: 24px;">
+                            <p><strong>Version:</strong> 1.0.0</p>
+                            <p style="margin-top: 12px;"><strong>Description:</strong> A powerful dictionary and translation tool that helps you understand words and phrases while browsing the web.</p>
+                            
+                            <h4 style="margin-top: 24px; margin-bottom: 12px; color: #1e293b;">Features:</h4>
+                            <ul style="margin-left: 20px; color: #64748b; line-height: 1.6;">
+                                <li>AI-powered definitions and translations</li>
+                                <li>Support for multiple languages</li>
+                                <li>Save words for later review</li>
+                                <li>Export your vocabulary data</li>
+                                <li>Customizable popup positioning</li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>

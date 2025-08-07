@@ -91,61 +91,74 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'getDefinition') {
     const word = message.word.toLowerCase();
 
-    chrome.storage.local.get(['preferredSource', 'mwApiKey', 'targetLanguage', 'definitionScope', 'exampleCount', 'ttsEnabled'], (settings) => {
+    // --- FETCH user settings, now including geminiApiKey ---
+    chrome.storage.local.get([
+      'preferredSource',
+      'mwApiKey',
+      'geminiApiKey',           // <--- added
+      'elevenlabsApiKey',       // <--- added
+      'targetLanguage',
+      'definitionScope',
+      'exampleCount',
+      'ttsEnabled'
+    ], (settings) => {
       const source = settings.preferredSource || 'cambridge';
+      const geminiKey = settings.geminiApiKey;    // <--- added
       const mwApiKey = settings.mwApiKey;
+      const elevenlabsApiKey = settings.elevenlabsApiKey; // <--- added
       const targetLanguage = settings.targetLanguage || 'none';
-      const displaySettingsCacheKey = `qdp_${source}_${word}_${settings.definitionScope}_${settings.exampleCount}_${targetLanguage}`;
+      const cacheKey = `qdp_${source}_${word}_${settings.definitionScope}_${settings.exampleCount}_${targetLanguage}`;
+      
+      console.log(`[BACKGROUND DEBUG] Retrieved settings for word: "${word}"`);
+      console.log(`[BACKGROUND DEBUG] ElevenLabs API Key available: ${elevenlabsApiKey ? 'Yes' : 'No'}`);
+      console.log(`[BACKGROUND DEBUG] ElevenLabs API Key length: ${elevenlabsApiKey ? elevenlabsApiKey.length : 0}`);
+      console.log(`[BACKGROUND DEBUG] TTS Enabled: ${settings.ttsEnabled}`);
 
-      chrome.storage.local.get(displaySettingsCacheKey, (result) => {
-        if (result[displaySettingsCacheKey]) {
-          console.log(`Found processed data in cache for "${word}" with current settings.`);
-          sendResponse({ status: 'success', data: result[displaySettingsCacheKey], ttsEnabled: settings.ttsEnabled || false });
+      chrome.storage.local.get(cacheKey, (result) => {
+        if (result[cacheKey]) {
+          sendResponse({ status: 'success', data: result[cacheKey], ttsEnabled: settings.ttsEnabled, elevenlabsApiKey: elevenlabsApiKey });
           return;
         }
 
-        console.log(`Fetching "${word}" from API source: ${source}`);
         let apiPromise;
 
         if (source === 'gemini') {
+          // --- REQUIRE geminiApiKey ---
+          if (!geminiKey || !geminiKey.trim()) {
+            sendResponse({ status: 'error', message: 'Gemini API key is not set.' });
+            return;
+          }
+
           const encodedWord = encodeURIComponent(word);
-          const langParam = targetLanguage && targetLanguage !== 'none' ? `?lang=${encodeURIComponent(targetLanguage)}` : '';
+          const langParam = targetLanguage !== 'none' ? `?lang=${encodeURIComponent(targetLanguage)}` : '';
           const geminiUrl = `http://localhost:3000/api/gemini/${encodedWord}${langParam}`;
-          
-          // Check if it's a single word or phrase
-          const words = word.split(/\s+/).filter(w => w.length > 0);
+          const fetchOpts = { headers: { 'x-api-key': geminiKey.trim() } }; // <--- pass key
+
+          const words = word.split(/\s+/).filter(w => w);
           const isPhrase = words.length > 1;
-          
+
           if (isPhrase) {
-            // For phrases, only fetch from Gemini (no Cambridge audio)
-            apiPromise = fetch(geminiUrl)
+            apiPromise = fetch(geminiUrl, fetchOpts)
               .then(res => res.json())
-              .then(geminiData => {
-                const normalizedGemini = normalizeGeminiData(geminiData);
-                if (!normalizedGemini) throw new Error('Gemini AI definition not found or invalid format.');
-                return normalizedGemini;
-              });
+              .then(normalizeGeminiData);
           } else {
-            // For single words, fetch from both Gemini and Cambridge for audio
             const cambridgeUrl = `http://localhost:3000/api/dictionary/en/${encodedWord}`;
             apiPromise = Promise.all([
-              fetch(geminiUrl).then(res => res.json()),
-              fetch(cambridgeUrl).then(res => res.json().catch(() => null)) // Prevent crash if Cambridge fails
+              fetch(geminiUrl, fetchOpts).then(res => res.json()),
+              fetch(cambridgeUrl).then(res => res.json().catch(() => null))
             ]).then(([geminiData, cambridgeData]) => {
-              const normalizedGemini = normalizeGeminiData(geminiData);
-              if (!normalizedGemini) throw new Error('Gemini AI definition not found or invalid format.');
-              if (cambridgeData && cambridgeData.pronunciation && cambridgeData.pronunciation.length > 0) {
-                const cambridgePron = cambridgeData.pronunciation.find(p => p.url) || cambridgeData.pronunciation[0];
-                if (cambridgePron) {
-                  normalizedGemini.pronunciation[0].url = cambridgePron.url || '';
-                  if (!normalizedGemini.pronunciation[0].pron && cambridgePron.pron) {
-                    normalizedGemini.pronunciation[0].pron = cambridgePron.pron;
-                  }
+              const normalized = normalizeGeminiData(geminiData);
+              if (cambridgeData?.pronunciation?.length) {
+                const camPron = cambridgeData.pronunciation.find(p => p.url) || cambridgeData.pronunciation[0];
+                if (camPron) {
+                  normalized.pronunciation[0].url ||= camPron.url;
+                  normalized.pronunciation[0].pron ||= camPron.pron;
                 }
               }
-              return normalizedGemini;
+              return normalized;
             });
           }
+
         } else if (source === 'merriam-webster') {
           if (!mwApiKey) {
             sendResponse({ status: 'error', message: 'Merriam-Webster API key is not set.' });
@@ -167,11 +180,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           
           const finalData = applyDisplayPreferences(fullData, settings);
 
-          chrome.storage.local.set({ [displaySettingsCacheKey]: finalData });
-          sendResponse({ status: 'success', data: finalData, ttsEnabled: settings.ttsEnabled || false });
-        }).catch(error => {
-          console.error(`API Error for "${word}" from ${source}:`, error);
-          sendResponse({ status: 'error', message: error.message });
+          chrome.storage.local.set({ [cacheKey]: finalData });
+          sendResponse({ status: 'success', data: finalData, ttsEnabled: settings.ttsEnabled, elevenlabsApiKey: elevenlabsApiKey });
+        }).catch(err => {
+          sendResponse({ status: 'error', message: err.message });
         });
       });
     });
@@ -182,7 +194,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'translateSentence') {
     const sentence = message.text;
 
-    chrome.storage.local.get(['targetLanguage', 'ttsEnabled'], (settings) => {
+    chrome.storage.local.get(['targetLanguage', 'ttsEnabled', 'elevenlabsApiKey'], (settings) => {
       const targetLanguage = settings.targetLanguage;
       
       // Check if no target language is set
@@ -200,7 +212,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       chrome.storage.local.get(cacheKey, (result) => {
         if (result[cacheKey]) {
           console.log(`Found sentence translation in cache.`);
-          sendResponse({ status: 'success', data: result[cacheKey], ttsEnabled: settings.ttsEnabled || false });
+          sendResponse({ status: 'success', data: result[cacheKey], ttsEnabled: settings.ttsEnabled || false, elevenlabsApiKey: settings.elevenlabsApiKey });
           return;
         }
 
@@ -217,7 +229,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             }
             
             chrome.storage.local.set({ [cacheKey]: data });
-            sendResponse({ status: 'success', data: data, ttsEnabled: settings.ttsEnabled || false });
+            sendResponse({ status: 'success', data: data, ttsEnabled: settings.ttsEnabled || false, elevenlabsApiKey: settings.elevenlabsApiKey });
           })
           .catch(error => {
             console.error(`Translation Error for sentence:`, error);

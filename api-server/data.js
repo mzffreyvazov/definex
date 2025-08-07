@@ -133,7 +133,7 @@ app.use(cors({
   origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : '*',
   credentials: true,
   methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'x-api-key', 'x-elevenlabs-api-key'],
   exposedHeaders: ['X-Cache-Status', 'X-Response-Time', 'X-Rate-Limit-Remaining'],
   maxAge: 86400 // 24 hours preflight cache
 }));
@@ -602,8 +602,11 @@ app.get("/api/tts/:text", async (req, res) => {
     const words = text.trim().split(/\s+/);
     const wordCount = words.length;
     
+    console.log(`[TTS GET] =================== NEW TTS REQUEST ===================`);
     console.log(`[TTS GET] Request received for text: "${text}"`);
     console.log(`[TTS GET] Word count: ${wordCount}`);
+    console.log(`[TTS GET] Headers received:`, Object.keys(req.headers));
+    console.log(`[TTS GET] x-elevenlabs-api-key header present: ${req.headers['x-elevenlabs-api-key'] ? 'Yes' : 'No'}`);
     
     // Only allow phrases (2-5 words) and sentences (6+ words)
     if (wordCount < 2) {
@@ -613,10 +616,17 @@ app.get("/api/tts/:text", async (req, res) => {
       });
     }
     
-    if (!process.env.ELEVENLABS_API_KEY) {
-      console.log(`[TTS GET] Error - EL EVENLABS_API_KEY not found in environment`);
-      return res.status(500).json({ error: "ELEVENLABS_API_KEY is not set in the .env file." });
+    if (!process.env.ELEVENLABS_API_KEY && !req.headers['x-elevenlabs-api-key']) {
+      console.log(`[TTS GET] Error - No ElevenLabs API key provided`);
+      return res.status(500).json({ error: "ElevenLabs API key is required. Set ELEVENLABS_API_KEY in .env file or provide x-elevenlabs-api-key header." });
     }
+    
+    // Use header key if provided, otherwise fall back to environment variable
+    const elevenlabsApiKey = req.headers['x-elevenlabs-api-key'] || process.env.ELEVENLABS_API_KEY;
+    
+    console.log(`[TTS GET] Using API key from: ${req.headers['x-elevenlabs-api-key'] ? 'Header' : 'Environment'}`);
+    console.log(`[TTS GET] API key length: ${elevenlabsApiKey ? elevenlabsApiKey.length : 0} characters`);
+    console.log(`[TTS GET] API key preview: ${elevenlabsApiKey ? elevenlabsApiKey.substring(0, 10) + '...' : 'None'}`);
     
     // Eleven Labs API configuration
     const voiceId = "JBFqnCBsd6RMkjVDRZzb"; // Default voice ID
@@ -630,12 +640,12 @@ app.get("/api/tts/:text", async (req, res) => {
     console.log(`[TTS GET] Making request to Eleven Labs API`);
     console.log(`[TTS GET] API URL: ${apiUrl}`);
     console.log(`[TTS GET] Request body:`, requestBody);
-    console.log(`[TTS GET] API Key present: ${process.env.ELEVENLABS_API_KEY ? 'Yes' : 'No'}`);
+    console.log(`[TTS GET] API Key source: ${req.headers['x-elevenlabs-api-key'] ? 'Header' : 'Environment'}`);
     
     // Make request to Eleven Labs API
     const response = await axios.post(apiUrl, requestBody, {
       headers: {
-        'xi-api-key': process.env.ELEVENLABS_API_KEY,
+        'xi-api-key': elevenlabsApiKey,
         'Content-Type': 'application/json'
       },
       responseType: 'arraybuffer' // Important: Get binary data
@@ -708,10 +718,13 @@ app.post("/api/tts", async (req, res) => {
       });
     }
     
-    if (!process.env.ELEVENLABS_API_KEY) {
-      console.log(`[TTS POST] Error - ELEVENLABS_API_KEY not found in environment`);
-      return res.status(500).json({ error: "ELEVENLABS_API_KEY is not set in the .env file." });
+    if (!process.env.ELEVENLABS_API_KEY && !req.headers['x-elevenlabs-api-key']) {
+      console.log(`[TTS POST] Error - No ElevenLabs API key provided`);
+      return res.status(500).json({ error: "ElevenLabs API key is required. Set ELEVENLABS_API_KEY in .env file or provide x-elevenlabs-api-key header." });
     }
+    
+    // Use header key if provided, otherwise fall back to environment variable
+    const elevenlabsApiKey = req.headers['x-elevenlabs-api-key'] || process.env.ELEVENLABS_API_KEY;
     
     const apiUrl = `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=mp3_44100_128`;
     
@@ -723,11 +736,12 @@ app.post("/api/tts", async (req, res) => {
     console.log(`[TTS POST] Making request to Eleven Labs API`);
     console.log(`[TTS POST] API URL: ${apiUrl}`);
     console.log(`[TTS POST] Request body:`, requestBody);
+    console.log(`[TTS POST] API Key source: ${req.headers['x-elevenlabs-api-key'] ? 'Header' : 'Environment'}`);
     
     // Make request to Eleven Labs API
     const response = await axios.post(apiUrl, requestBody, {
       headers: {
-        'xi-api-key': process.env.ELEVENLABS_API_KEY,
+        'xi-api-key': elevenlabsApiKey,
         'Content-Type': 'application/json'
       },
       responseType: 'arraybuffer'

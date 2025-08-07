@@ -171,6 +171,16 @@ function handleSelection(event) {
 
       if (response.status === 'success') {
         const ttsEnabled = response.ttsEnabled || false;
+        const elevenlabsApiKey = response.elevenlabsApiKey || '';
+        
+        console.log(`[CONTENT DEBUG] Received response for definition`);
+        console.log(`[CONTENT DEBUG] TTS Enabled: ${ttsEnabled}`);
+        console.log(`[CONTENT DEBUG] ElevenLabs API Key received: ${elevenlabsApiKey ? 'Yes' : 'No'}`);
+        console.log(`[CONTENT DEBUG] ElevenLabs API Key length: ${elevenlabsApiKey ? elevenlabsApiKey.length : 0}`);
+        
+        // Store ElevenLabs API key globally for TTS usage
+        window.elevenlabsApiKey = elevenlabsApiKey;
+        
         const content = isSentence ? formatTranslationData(response.data, ttsEnabled) : formatData(response.data, ttsEnabled);
         updatePopupContent(content);
       } else if (response.status === 'noLanguage') {
@@ -361,24 +371,29 @@ function playAudio(event) {
 
 function playTTS(event) {
     const text = event.target.getAttribute('data-tts-text');
+    console.log(`[TTS DEBUG] playTTS called with text: "${text}"`);
+    
     if (text) {
         // Check word count to ensure it's a phrase or sentence
         const words = text.trim().split(/\s+/).filter(w => w.length > 0);
+        console.log(`[TTS DEBUG] Word count: ${words.length}`);
+        
         if (words.length < 2) {
-            console.log('TTS is only available for phrases (2+ words), not individual words.');
+            console.log('[TTS DEBUG] TTS is only available for phrases (2+ words), not individual words.');
             return;
         }
         
-        console.log(`Playing TTS for: "${text}"`);
+        console.log(`[TTS DEBUG] Playing TTS for: "${text}"`);
+        console.log(`[TTS DEBUG] ElevenLabs API Key available: ${window.elevenlabsApiKey ? 'Yes' : 'No'}`);
         
         // Check if audio is already cached
         const cacheKey = text.toLowerCase().trim();
         if (audioCache.has(cacheKey)) {
-            console.log('Playing cached audio');
+            console.log('[TTS DEBUG] Playing cached audio');
             const cachedAudio = audioCache.get(cacheKey);
             cachedAudio.currentTime = 0; // Reset to beginning
             cachedAudio.play().catch(error => {
-                console.error('Cached TTS playback failed:', error);
+                console.error('[TTS DEBUG] Cached TTS playback failed:', error);
             });
             return;
         }
@@ -387,23 +402,61 @@ function playTTS(event) {
         const encodedText = encodeURIComponent(text);
         const ttsUrl = `http://localhost:3000/api/tts/${encodedText}`;
         
-        console.log(`TTS URL: ${ttsUrl}`);
-        console.log('Fetching new audio and caching it');
+        console.log(`[TTS DEBUG] TTS URL: ${ttsUrl}`);
+        console.log('[TTS DEBUG] Fetching new audio and caching it');
         
-        // Create and cache audio
-        const audio = new Audio(ttsUrl);
+        // Prepare headers with ElevenLabs API key if available
+        const headers = {};
+        if (window.elevenlabsApiKey && window.elevenlabsApiKey.trim()) {
+            headers['x-elevenlabs-api-key'] = window.elevenlabsApiKey.trim();
+            console.log('[TTS DEBUG] Using ElevenLabs API key from extension settings');
+            console.log('[TTS DEBUG] API key preview:', window.elevenlabsApiKey.substring(0, 10) + '...');
+        } else {
+            console.log('[TTS DEBUG] No ElevenLabs API key found, using server environment key');
+        }
         
-        // Cache the audio once it's loaded
-        audio.addEventListener('canplaythrough', () => {
-            cleanupAudioCache(); // Check cache size before adding
-            audioCache.set(cacheKey, audio);
-            console.log(`Audio cached for: "${text}" (Cache size: ${audioCache.size})`);
-        });
+        console.log('[TTS DEBUG] Request headers:', headers);
+        console.log('[TTS DEBUG] Making fetch request to:', ttsUrl);
         
-        // Play the audio
-        audio.play().catch(error => {
-            console.error('TTS playback failed:', error);
-        });
+        // Fetch audio with API key
+        fetch(ttsUrl, { 
+            method: 'GET',
+            headers: headers,
+            mode: 'cors'
+        })
+            .then(response => {
+                console.log(`[TTS DEBUG] Fetch response status: ${response.status} ${response.statusText}`);
+                if (!response.ok) {
+                    throw new Error(`TTS request failed: ${response.status} ${response.statusText}`);
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                console.log(`[TTS DEBUG] Received audio blob, size: ${blob.size} bytes`);
+                const audioUrl = URL.createObjectURL(blob);
+                const audio = new Audio(audioUrl);
+                
+                // Cache the audio once it's loaded
+                audio.addEventListener('canplaythrough', () => {
+                    cleanupAudioCache(); // Check cache size before adding
+                    audioCache.set(cacheKey, audio);
+                    console.log(`[TTS DEBUG] Audio cached for: "${text}" (Cache size: ${audioCache.size})`);
+                });
+                
+                // Add error handling for audio playback
+                audio.addEventListener('error', (e) => {
+                    console.error('[TTS DEBUG] Audio playback error:', e);
+                });
+                
+                // Play the audio
+                console.log('[TTS DEBUG] Starting audio playback');
+                audio.play().catch(error => {
+                    console.error('[TTS DEBUG] TTS playback failed:', error);
+                });
+            })
+            .catch(error => {
+                console.error('[TTS DEBUG] TTS fetch failed:', error);
+            });
     }
 }
 

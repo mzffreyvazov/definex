@@ -1,166 +1,379 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Semantix Settings</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Semantix - Configuration</title>
     <style>
-        /* Import Google Font - Open Sans */
-        @import url('https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap');
-        
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
-        body { 
-            font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            margin: 0;
-        }
-        
-        .container {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-            width: 100%;
-            max-width: 500px;
-            max-height: 90vh;
-            display: flex;
-            flex-direction: column;
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f8fafc;
+            color: #334155;
+            line-height: 1.6;
+            height: 100vh;
             overflow: hidden;
         }
-        
-        .header {
-            text-align: center;
-            padding: 30px 40px 20px 40px;
-            border-bottom: 1px solid #f0f0f0;
-            flex-shrink: 0;
+
+        .app-container {
+            display: flex;
+            height: 100vh;
         }
-        
-        .content {
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: 280px;
+            background-color: #ffffff;
+            border-right: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .sidebar-header {
+            padding: 24px 20px;
+            border-bottom: 1px solid #e2e8f0;
+            background-color: #f8fafc;
+        }
+
+        .sidebar-header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 4px;
+        }
+
+        .sidebar-header p {
+            font-size: 14px;
+            color: #64748b;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            padding: 20px 0;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: #64748b;
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            font-size: 15px;
+        }
+
+        .nav-item:hover {
+            background-color: #f1f5f9;
+            color: #3b82f6;
+        }
+
+        .nav-item.active {
+            background-color: #eff6ff;
+            color: #3b82f6;
+            border-right: 3px solid #3b82f6;
+            font-weight: 500;
+        }
+
+        .nav-item-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 12px;
+            stroke-width: 2;
+        }
+
+        /* Main Content Styles */
+        .main-content {
             flex: 1;
             overflow-y: auto;
-            padding: 20px 40px 30px 40px;
+            background-color: #ffffff;
         }
-        
-        .content::-webkit-scrollbar {
-            width: 6px;
+
+        .content-header {
+            padding: 32px 40px 24px;
+            border-bottom: 1px solid #e2e8f0;
+            background-color: #ffffff;
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
-        
-        .content::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 3px;
-        }
-        
-        .content::-webkit-scrollbar-thumb {
-            background: #c1c1c1;
-            border-radius: 3px;
-        }
-        
-        .content::-webkit-scrollbar-thumb:hover {
-            background: #a8a8a8;
-        }
-        
-        .header h1 {
-            color: #333;
+
+        .content-header h2 {
             font-size: 28px;
             font-weight: 600;
+            color: #1e293b;
             margin-bottom: 8px;
         }
-        
-        .header p {
-            color: #666;
-            font-size: 14px;
+
+        .content-header p {
+            color: #64748b;
+            font-size: 16px;
         }
-        
-        .form-group { 
-            margin-bottom: 24px; 
+
+        .content-body {
+            padding: 40px;
         }
-        
-        label { 
-            display: block; 
-            margin-bottom: 8px; 
+
+        .content-section {
+            display: none;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        /* Settings Section Styles */
+        .settings-group {
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 32px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+        }
+
+        .settings-group-title {
+            font-size: 18px;
             font-weight: 600;
-            color: #333;
+            color: #1e293b;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #3b82f6;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        label {
+            display: block;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 8px;
             font-size: 14px;
         }
-        
+
         select, input[type="text"], input[type="password"] {
             width: 100%;
+            max-width: 400px;
             padding: 12px 16px;
-            border: 2px solid #e1e5e9;
+            border: 1px solid #d1d5db;
             border-radius: 8px;
             font-size: 14px;
-            transition: all 0.3s ease;
-            background: white;
-            appearance: none;
-            -webkit-appearance: none;
-            -moz-appearance: none;
+            background-color: white;
+            transition: border-color 0.2s, box-shadow 0.2s;
         }
-        
-        .select-wrapper {
-            position: relative;
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
-        
-        select {
-            padding-right: 40px;
-            background: linear-gradient(to bottom, #ffffff 0%, #f9f9f9 100%);
+
+        .info-box {
+            background-color: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 12px;
+            font-size: 13px;
+            color: #475569;
+            max-width: 500px;
+        }
+
+        .info-box.warning {
+            background-color: #fef3c7;
+            border-color: #fbbf24;
+            color: #92400e;
+        }
+
+        .info-box a {
+            color: #3b82f6;
+            text-decoration: none;
+        }
+
+        .info-box a:hover {
+            text-decoration: underline;
+        }
+
+        /* Saved Words Section */
+        .words-container {
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .words-header {
+            padding: 20px 24px;
+            background-color: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .words-count {
+            font-size: 14px;
+            color: #64748b;
+        }
+
+        .search-box {
+            padding: 16px 24px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .search-input {
+            width: 100%;
+            max-width: none;
+            margin: 0;
+        }
+
+        .words-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .word-item {
+            padding: 16px 24px;
+            border-bottom: 1px solid #f1f5f9;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .word-item:last-child {
+            border-bottom: none;
+        }
+
+        .word-info h4 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 4px;
+        }
+
+        .word-definition {
+            font-size: 14px;
+            color: #64748b;
+            line-height: 1.5;
+        }
+
+        .word-date {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+
+        .word-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            background-color: white;
+            color: #374151;
+            font-size: 13px;
             cursor: pointer;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-            color: #444;
+            transition: all 0.2s;
         }
-        
-        .select-wrapper::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            right: 16px;
-            width: 10px;
-            height: 10px;
-            border-right: 2px solid #667eea;
-            border-bottom: 2px solid #667eea;
-            transform: translateY(-70%) rotate(45deg);
-            pointer-events: none;
-            transition: all 0.2s ease;
+
+        .btn:hover {
+            background-color: #f9fafb;
         }
-        
-        .select-wrapper:hover::after {
-            border-right-color: #764ba2;
-            border-bottom-color: #764ba2;
+
+        .btn-primary {
+            background-color: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
         }
-        
-        select:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
-            transform: translateY(-1px);
-            background: white;
+
+        .btn-primary:hover {
+            background-color: #2563eb;
         }
-        
-        select:hover {
-            border-color: #b8c5f2;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(102, 126, 234, 0.15);
+
+        .btn-danger {
+            background-color: #ef4444;
+            color: white;
+            border-color: #ef4444;
         }
-        
-        select option {
-            padding: 10px;
-            background: white;
-            color: #444;
+
+        .btn-danger:hover {
+            background-color: #dc2626;
         }
-        
-        input[type="text"]:focus, input[type="password"]:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
-            transform: translateY(-1px);
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #64748b;
         }
-        
+
+        .empty-state-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 16px;
+            opacity: 0.5;
+        }
+
+        /* Export Section */
+        .export-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .export-card {
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .export-card:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+        }
+
+        .export-icon {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 16px;
+            color: #3b82f6;
+        }
+
+        .export-card h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 8px;
+        }
+
+        .export-card p {
+            color: #64748b;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
         .api-key-section {
             background: #f8f9fa;
             border: 1px solid #e9ecef;
@@ -170,56 +383,15 @@
             transition: all 0.3s ease;
             box-shadow: 0 2px 10px rgba(0,0,0,0.03);
         }
-        
+
         .api-key-section.hidden {
             display: none;
         }
-        
-        .api-help {
-            font-size: 12px;
-            color: #666;
-            margin-top: 6px;
-            line-height: 1.4;
+
+        .hidden {
+            display: none;
         }
-        
-        .api-help a {
-            color: #667eea;
-            text-decoration: none;
-        }
-        
-        .api-help a:hover {
-            text-decoration: underline;
-        }
-        
-        .button-group {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-top: 30px;
-        }
-        
-        button {
-            padding: 12px 30px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            margin-bottom: 15px;
-        }
-        
-        button:hover { 
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-        }
-        
-        button:active {
-            transform: translateY(0);
-        }
-        
+
         #status { 
             color: #28a745; 
             font-weight: 600;
@@ -228,182 +400,314 @@
             min-height: 20px;
             opacity: 0;
             transition: opacity 0.3s ease;
+            margin-top: 16px;
         }
         
         #status.show {
             opacity: 1;
         }
-        
-        .section-header {
-            margin: 30px 0 20px 0;
-            text-align: left;
-            border-bottom: 2px solid #667eea;
-            padding-bottom: 8px;
-        }
-        
-        .section-header h2 {
-            font-size: 20px;
-            font-weight: 600;
-            color: #333;
-            margin: 0 0 4px 0;
-        }
-        
-        .section-header p {
-            font-size: 13px;
-            color: #666;
-            margin: 0;
-        }
-        
-        .section-header:first-child {
-            margin-top: 0;
-        }
-        
-        .source-description {
-            font-size: 12px;
-            color: #666;
-            margin-top: 10px;
-            padding: 10px 14px;
-            background: #f8f9fa;
-            border-radius: 6px;
-            border-left: 3px solid #667eea;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 240px;
+            }
+            
+            .content-body {
+                padding: 24px;
+            }
+            
+            .content-header {
+                padding: 24px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>Semantix</h1>
-            <p>Configure your dictionary preferences</p>
-        </div>
-        
-        <div class="content">
-            <!-- DICTIONARY SOURCE SECTION -->
-            <div class="section-header">
-                <h2>Dictionary Source</h2>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h1>Semantix</h1>
+                <p>Dictionary & Translation</p>
             </div>
             
-            <div class="form-group">
-                <label for="source">Choose your preferred dictionary:</label>
-                <div class="select-wrapper">
-                    <select id="source">
-                        <option value="cambridge">Cambridge Dictionary</option>
-                        <option value="merriam-webster">Merriam-Webster</option>
-                        <option value="gemini">Gemini AI</option>
-                    </select>
+            <nav class="sidebar-nav">
+                <button class="nav-item active" data-section="settings">
+                    <svg class="nav-item-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                    Settings
+                </button>
+                
+                <button class="nav-item" data-section="saved-words">
+                    <svg class="nav-item-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
+                    </svg>
+                    Saved Words
+                </button>
+                
+                <button class="nav-item" data-section="export">
+                    <svg class="nav-item-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Export Data
+                </button>
+                
+                <button class="nav-item" data-section="statistics">
+                    <svg class="nav-item-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                    Statistics
+                </button>
+                
+                <button class="nav-item" data-section="about">
+                    <svg class="nav-item-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    About
+                </button>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Settings Section -->
+            <div class="content-section active" id="settings">
+                <div class="content-header">
+                    <h2>Settings</h2>
+                    <p>Configure your dictionary and translation preferences</p>
                 </div>
-                <div id="source-description" class="source-description"></div>
+                
+                <div class="content-body">
+                    <form id="optionsForm">
+                        <div class="settings-group">
+                            <h3 class="settings-group-title">Dictionary Source</h3>
+                            
+                            <div class="form-group">
+                                <label for="source">Choose your preferred dictionary:</label>
+                                <select id="source">
+                                    <option value="cambridge">Cambridge Dictionary</option>
+                                    <option value="merriam-webster">Merriam-Webster</option>
+                                    <option value="gemini">Gemini AI</option>
+                                </select>
+                                <div id="source-description" class="info-box"></div>
+                            </div>
+
+                            <div class="form-group">
+                                <div id="mw-api-section" class="api-key-section hidden">
+                                    <label for="mw-key">Merriam-Webster API Key:</label>
+                                    <input type="password" id="mw-key" placeholder="Enter your API key here">
+                                    <div class="info-box">
+                                        Get your free API key from <a href="https://dictionaryapi.com/" target="_blank">dictionaryapi.com</a>.
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <div id="gemini-api-section" class="api-key-section hidden">
+                                    <label for="gemini-key">Gemini AI API Key:</label>
+                                    <input type="password" id="gemini-key" placeholder="Enter your Gemini API key here">
+                                    <div class="info-box">
+                                        Enter your Gemini AI API key provided by your AI service.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-group" id="translation-section">
+                            <h3 class="settings-group-title">Translation Options</h3>
+                            <div class="info-box warning">
+                                Translation features are only available when using Gemini AI as your dictionary source.
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="target-language">Translate to:</label>
+                                <select id="target-language">
+                                    <option value="none">No Translation (Default)</option>
+                                    <option value="Spanish">Spanish</option>
+                                    <option value="French">French</option>
+                                    <option value="German">German</option>
+                                    <option value="Italian">Italian</option>
+                                    <option value="Portuguese">Portuguese</option>
+                                    <option value="Russian">Russian</option>
+                                    <option value="Turkish">Turkish</option>
+                                    <option value="Azerbaijani">Azerbaijani</option>
+                                    <option value="Japanese">Japanese</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="settings-group">
+                            <h3 class="settings-group-title">Display Options</h3>
+                            
+                            <div class="form-group">
+                                <label for="definition-scope">Definition Scope:</label>
+                                <select id="definition-scope">
+                                    <option value="relevant">Show only the most relevant definition</option>
+                                    <option value="all">Show definitions for all parts of speech</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="example-count">Number of Example Sentences (per definition):</label>
+                                <select id="example-count">
+                                    <option value="0">0</option>
+                                    <option value="1">1 (Default)</option>
+                                    <option value="2">2</option>
+                                    <option value="3">3</option>
+                                    <option value="4">4</option>
+                                    <option value="5">5</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="settings-group">
+                            <h3 class="settings-group-title">Text-to-Speech Options</h3>
+                            
+                            <div class="form-group">
+                                <label for="tts-enabled">
+                                    <input type="checkbox" id="tts-enabled" style="margin-right: 8px;">
+                                    Enable Text-to-Speech (TTS) for phrases and sentences
+                                </label>
+                                <div class="info-box">
+                                    When enabled, TTS button will appear for original phrases and sentences, allowing you to hear them spoken aloud.
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <div id="elevenlabs-api-section" class="api-key-section hidden">
+                                    <label for="elevenlabs-key">ElevenLabs API Key:</label>
+                                    <input type="password" id="elevenlabs-key" placeholder="Enter your ElevenLabs API key here">
+                                    <div class="info-box">
+                                        Get your API key from <a href="https://elevenlabs.io/" target="_blank">elevenlabs.io</a> to enable high-quality text-to-speech.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Save Settings</button>
+                        <div id="status"></div>
+                    </form>
+                </div>
             </div>
 
-            <div class="form-group">
-                <div id="mw-api-section" class="api-key-section hidden">
-                    <label for="mw-key">Merriam-Webster API Key:</label>
-                    <input type="password" id="mw-key" placeholder="Enter your API key here">
-                    <div class="api-help">
-                        Get your free API key from <a href="https://dictionaryapi.com/" target="_blank">dictionaryapi.com</a>.
+            <!-- Saved Words Section -->
+            <div class="content-section" id="saved-words">
+                <div class="content-header">
+                    <h2>Saved Words</h2>
+                    <p>View and manage your saved words and definitions</p>
+                </div>
+                
+                <div class="content-body">
+                    <div class="words-container">
+                        <div class="words-header">
+                            <h3>Your Vocabulary</h3>
+                            <span class="words-count">0 words saved</span>
+                        </div>
+                        
+                        <div class="search-box">
+                            <input type="text" class="search-input" placeholder="Search saved words...">
+                        </div>
+                        
+                        <div class="words-list" id="wordsList">
+                            <div class="empty-state">
+                                <svg class="empty-state-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
+                                </svg>
+                                <h3>No saved words yet</h3>
+                                <p>Words you look up will appear here for future reference</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="form-group">
-                <div id="gemini-api-section" class="api-key-section hidden">
-                    <label for="gemini-key">Gemini AI API Key:</label>
-                    <input type="password" id="gemini-key" placeholder="Enter your Gemini API key here">
-                    <div class="api-help">
-                        Enter your Gemini AI API key provided by your AI service.
+
+            <!-- Export Section -->
+            <div class="content-section" id="export">
+                <div class="content-header">
+                    <h2>Export Data</h2>
+                    <p>Export your saved words and settings in various formats</p>
+                </div>
+                
+                <div class="content-body">
+                    <div class="export-options">
+                        <div class="export-card">
+                            <svg class="export-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            <h3>Export as CSV</h3>
+                            <p>Download your saved words as a CSV file for use in spreadsheet applications</p>
+                            <button class="btn btn-primary">Export CSV</button>
+                        </div>
+                        
+                        <div class="export-card">
+                            <svg class="export-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                            </svg>
+                            <h3>Export as JSON</h3>
+                            <p>Download your data as JSON format for backup or importing to other applications</p>
+                            <button class="btn btn-primary">Export JSON</button>
+                        </div>
+                        
+                        <div class="export-card">
+                            <svg class="export-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            <h3>Export Settings</h3>
+                            <p>Backup your extension settings to restore them later or share with other devices</p>
+                            <button class="btn btn-primary">Export Settings</button>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- TRANSLATION OPTIONS SECTION -->
-            <div id="translation-section" class="hidden">
-                <div class="section-header">
-                    <h2>Translation Options</h2>
-                    <p>Only available for the Gemini AI source.</p>
+            <!-- Statistics Section -->
+            <div class="content-section" id="statistics">
+                <div class="content-header">
+                    <h2>Statistics</h2>
+                    <p>View your learning progress and usage statistics</p>
                 </div>
-
-                <div class="form-group">
-                    <label for="target-language">Translate to:</label>
-                    <div class="select-wrapper">
-                        <select id="target-language">
-                            <option value="none">No Translation (Default)</option>
-                            <option value="Spanish">Spanish</option>
-                            <option value="French">French</option>
-                            <option value="German">German</option>
-                            <option value="Italian">Italian</option>
-                            <option value="Portuguese">Portuguese</option>
-                            <option value="Russian">Russian</option>
-                            <option value="Turkish">Turkish</option>
-                            <option value="Azerbaijani">Azerbaijani</option>
-                            <option value="Japanese">Japanese</option>
-                            <option value="Chinese (Simplified)">Chinese (Simplified)</option>
-                            <option value="Korean">Korean</option>
-                            <option value="Arabic">Arabic</option>
-                        </select>
+                
+                <div class="content-body">
+                    <div class="empty-state">
+                        <svg class="empty-state-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                        <h3>Statistics Coming Soon</h3>
+                        <p>Track your vocabulary growth and learning patterns</p>
                     </div>
                 </div>
             </div>
 
-            <!-- DISPLAY OPTIONS SECTION -->
-            <div class="section-header">
-                <h2>Display Options</h2>
-            </div>
-
-            <div class="form-group">
-                <label for="definition-scope">Definition Scope:</label>
-                <div class="select-wrapper">
-                    <select id="definition-scope">
-                        <option value="relevant">Show only the most relevant definition</option>
-                        <option value="all">Show definitions for all parts of speech</option>
-                    </select>
+            <!-- About Section -->
+            <div class="content-section" id="about">
+                <div class="content-header">
+                    <h2>About</h2>
+                    <p>Information about Semantix Chrome Extension</p>
                 </div>
-            </div>
-
-            <div class="form-group">
-                <label for="example-count">Number of Example Sentences (per definition):</label>
-                <div class="select-wrapper">
-                    <select id="example-count">
-                        <option value="0">0</option>
-                        <option value="1">1 (Default)</option>
-                        <option value="2">2</option>
-                        <option value="3">3</option>
-                        <option value="4">4</option>
-                        <option value="5">5</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- TEXT-TO-SPEECH OPTIONS SECTION -->
-            <div class="section-header">
-                <h2>Text-to-Speech Options</h2>
-                <p>Enable audio playback for phrases and sentences using Eleven Labs.</p>
-            </div>
-
-            <div class="form-group">
-                <label for="tts-enabled">
-                    <input type="checkbox" id="tts-enabled" style="margin-right: 8px;">
-                    Enable Text-to-Speech (TTS) for phrases and sentences
-                </label>
-                <div class="api-help" style="margin-top: 8px;">
-                    When enabled, TTS button will appear for original phrases and sentences, allowing you to hear them spoken aloud.
-                </div>
-            </div>
-
-            <div class="form-group">
-                <div id="elevenlabs-api-section" class="api-key-section hidden">
-                    <label for="elevenlabs-key">ElevenLabs API Key:</label>
-                    <input type="password" id="elevenlabs-key" placeholder="Enter your ElevenLabs API key here">
-                    <div class="api-help">
-                        Get your API key from <a href="https://elevenlabs.io/" target="_blank">elevenlabs.io</a> to enable high-quality text-to-speech.
+                
+                <div class="content-body">
+                    <div class="settings-group">
+                        <h3 class="settings-group-title">Semantix Dictionary Extension</h3>
+                        <p><strong>Version:</strong> 1.0.0</p>
+                        <p><strong>Description:</strong> A powerful dictionary and translation tool that helps you understand words and phrases while browsing the web.</p>
+                        
+                        <h4 style="margin-top: 24px; margin-bottom: 12px;">Features:</h4>
+                        <ul style="margin-left: 20px; color: #64748b;">
+                            <li>AI-powered definitions and translations</li>
+                            <li>Support for multiple languages</li>
+                            <li>Save words for later review</li>
+                            <li>Export your vocabulary data</li>
+                            <li>Customizable popup positioning</li>
+                        </ul>
                     </div>
                 </div>
-            </div>
-
-            <div class="button-group">
-                <button id="save">Save Settings</button>
-                <div id="status"></div>
             </div>
         </div>
     </div>
+
     <script src="options.js"></script>
 </body>
 </html>

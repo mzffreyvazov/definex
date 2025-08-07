@@ -59,6 +59,26 @@ let originalKeys = {
   elevenlabsApiKey: ''
 };
 
+// Navigation functionality
+function initializeNavigation() {
+  const navItems = document.querySelectorAll('.nav-item');
+  const contentSections = document.querySelectorAll('.content-section');
+
+  navItems.forEach(item => {
+    item.addEventListener('click', function() {
+      const targetSection = this.getAttribute('data-section');
+      
+      // Update active nav item
+      navItems.forEach(nav => nav.classList.remove('active'));
+      this.classList.add('active');
+      
+      // Show target section
+      contentSections.forEach(section => section.classList.remove('active'));
+      document.getElementById(targetSection).classList.add('active');
+    });
+  });
+}
+
 // Saves options to chrome.storage
 function save_options() {
   const source = document.getElementById('source').value;
@@ -158,8 +178,135 @@ function restore_options() {
   });
 }
 
+// Initialize saved words functionality
+function initializeSavedWords() {
+  // This would load and display saved words
+  // For now, it's just a placeholder
+  loadSavedWords();
+}
+
+function loadSavedWords() {
+  chrome.storage.local.get(['savedWords'], function(result) {
+    const savedWords = result.savedWords || [];
+    const wordsList = document.getElementById('wordsList');
+    const wordsCount = document.querySelector('.words-count');
+    
+    wordsCount.textContent = `${savedWords.length} words saved`;
+    
+    if (savedWords.length === 0) {
+      wordsList.innerHTML = `
+        <div class="empty-state">
+          <svg class="empty-state-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
+          </svg>
+          <h3>No saved words yet</h3>
+          <p>Words you look up will appear here for future reference</p>
+        </div>
+      `;
+    } else {
+      wordsList.innerHTML = savedWords.map(word => `
+        <div class="word-item">
+          <div class="word-info">
+            <h4>${word.word}</h4>
+            <div class="word-definition">${word.definition}</div>
+            <div class="word-date">${new Date(word.timestamp).toLocaleDateString()}</div>
+          </div>
+          <div class="word-actions">
+            <button class="btn btn-danger" onclick="removeWord('${word.word}')">Remove</button>
+          </div>
+        </div>
+      `).join('');
+    }
+  });
+}
+
+function removeWord(word) {
+  chrome.storage.local.get(['savedWords'], function(result) {
+    const savedWords = result.savedWords || [];
+    const updatedWords = savedWords.filter(w => w.word !== word);
+    chrome.storage.local.set({ savedWords: updatedWords }, function() {
+      loadSavedWords();
+    });
+  });
+}
+
+// Initialize export functionality
+function initializeExport() {
+  // Add event listeners for export buttons
+  const exportButtons = document.querySelectorAll('.export-card .btn');
+  exportButtons.forEach((button, index) => {
+    button.addEventListener('click', function() {
+      switch(index) {
+        case 0: exportAsCSV(); break;
+        case 1: exportAsJSON(); break;
+        case 2: exportSettings(); break;
+      }
+    });
+  });
+}
+
+function exportAsCSV() {
+  chrome.storage.local.get(['savedWords'], function(result) {
+    const savedWords = result.savedWords || [];
+    if (savedWords.length === 0) {
+      alert('No words to export');
+      return;
+    }
+    
+    const csvContent = "data:text/csv;charset=utf-8,"
+      + "Word,Definition,Date\n"
+      + savedWords.map(word => 
+          `"${word.word}","${word.definition}","${new Date(word.timestamp).toLocaleDateString()}"`
+        ).join("\n");
+    
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "semantix_words.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  });
+}
+
+function exportAsJSON() {
+  chrome.storage.local.get(['savedWords'], function(result) {
+    const savedWords = result.savedWords || [];
+    if (savedWords.length === 0) {
+      alert('No words to export');
+      return;
+    }
+    
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(savedWords, null, 2));
+    const link = document.createElement("a");
+    link.setAttribute("href", dataStr);
+    link.setAttribute("download", "semantix_words.json");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  });
+}
+
+function exportSettings() {
+  chrome.storage.local.get(null, function(result) {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(result, null, 2));
+    const link = document.createElement("a");
+    link.setAttribute("href", dataStr);
+    link.setAttribute("download", "semantix_settings.json");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
+  // Initialize all components
+  initializeNavigation();
   restore_options();
+  initializeSavedWords();
+  initializeExport();
+  
+  // Set up event listeners
   document.getElementById('source').addEventListener('change', updateSourceUI);
   document.getElementById('tts-enabled').addEventListener('change', updateTTSUI);
   
@@ -209,5 +356,30 @@ document.addEventListener('DOMContentLoaded', function() {
       this.value = maskApiKey(this.value);
     }
   });
+
+  // Form submission
+  document.getElementById('optionsForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    save_options();
+  });
+
+  // Search functionality for saved words
+  const searchInput = document.querySelector('.search-input');
+  if (searchInput) {
+    searchInput.addEventListener('input', function() {
+      const searchTerm = this.value.toLowerCase();
+      const wordItems = document.querySelectorAll('.word-item');
+      
+      wordItems.forEach(item => {
+        const word = item.querySelector('h4').textContent.toLowerCase();
+        const definition = item.querySelector('.word-definition').textContent.toLowerCase();
+        
+        if (word.includes(searchTerm) || definition.includes(searchTerm)) {
+          item.style.display = 'flex';
+        } else {
+          item.style.display = 'none';
+        }
+      });
+    });
+  }
 });
-document.getElementById('save').addEventListener('click', save_options);

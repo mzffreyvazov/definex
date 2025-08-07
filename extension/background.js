@@ -95,8 +95,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     chrome.storage.local.get([
       'preferredSource',
       'mwApiKey',
-      'geminiApiKey',           // <--- added
-      'elevenlabsApiKey',       // <--- added
+      'geminiApiKey',           
+      'elevenlabsApiKey',      
       'targetLanguage',
       'definitionScope',
       'exampleCount',
@@ -108,11 +108,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       const elevenlabsApiKey = settings.elevenlabsApiKey; // <--- added
       const targetLanguage = settings.targetLanguage || 'none';
       const cacheKey = `qdp_${source}_${word}_${settings.definitionScope}_${settings.exampleCount}_${targetLanguage}`;
-      
-      console.log(`[BACKGROUND DEBUG] Retrieved settings for word: "${word}"`);
-      console.log(`[BACKGROUND DEBUG] ElevenLabs API Key available: ${elevenlabsApiKey ? 'Yes' : 'No'}`);
-      console.log(`[BACKGROUND DEBUG] ElevenLabs API Key length: ${elevenlabsApiKey ? elevenlabsApiKey.length : 0}`);
-      console.log(`[BACKGROUND DEBUG] TTS Enabled: ${settings.ttsEnabled}`);
 
       chrome.storage.local.get(cacheKey, (result) => {
         if (result[cacheKey]) {

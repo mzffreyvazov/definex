@@ -36,16 +36,27 @@
         }
 
         .sidebar-header {
-            padding: 24px 20px;
-            border-bottom: 1px solid #e2e8f0;
-            background-color: #f8fafc;
+            padding: 20px 20px;
+
+        }
+
+        .brand-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-logo {
+            width: 28px;
+            height: 28px;
+            object-fit: contain;
         }
 
         .sidebar-header h1 {
-            font-size: 24px;
+            font-size: 20px;
             font-weight: 600;
             color: #1e293b;
-            margin-bottom: 4px;
+            margin: 0;
         }
 
         .sidebar-header p {
@@ -55,7 +66,7 @@
 
         .sidebar-nav {
             flex: 1;
-            padding: 20px 0;
+            padding: 2px 0 20px 0;
         }
 
         .nav-item {
@@ -100,7 +111,7 @@
         }
 
         .content-header {
-            padding: 32px 40px 24px;
+            padding: 20px 40px 20px;
             border-bottom: 1px solid #e2e8f0;
             background-color: #ffffff;
             position: sticky;
@@ -399,8 +410,10 @@
         <!-- Sidebar -->
         <div class="sidebar">
             <div class="sidebar-header">
-                <h1>Semantix</h1>
-                <p>Dictionary & Translation</p>
+                <div class="brand-container">
+                    <img src="icons/logo.png" alt="Semantix Logo" class="brand-logo">
+                    <h1>Semantix</h1>
+                </div>
             </div>
             
             <nav class="sidebar-nav">

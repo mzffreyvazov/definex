@@ -331,91 +331,250 @@ function initializeExport() {
 }
 
 function exportAsCSV() {
+  // Show loading feedback
+  const exportButton = document.querySelector('.export-card:first-child .btn');
+  const originalText = exportButton.textContent;
+  exportButton.textContent = 'Exporting...';
+  exportButton.disabled = true;
+  
   chrome.storage.local.get(['savedWords'], function(result) {
-    const savedWords = result.savedWords || [];
-    if (savedWords.length === 0) {
-      alert('No words to export');
-      return;
-    }
-    
-    // Create CSV header
-    const header = "Type,Text,Part of Speech,Definition,Translation,Examples,Date\n";
-    
-    // Process each saved item
-    const csvRows = savedWords.map(item => {
-      const type = item.type;
-      const text = item.text;
-      const pos = item.partOfSpeech || '';
-      
-      // Combine all definitions
-      let definitions = '';
-      let examples = '';
-      
-      if (item.definitions && item.definitions.length > 0) {
-        definitions = item.definitions.map(def => def.text).join('; ');
-        examples = item.definitions
-          .flatMap(def => def.examples || [])
-          .map(ex => ex.text)
-          .join('; ');
+    try {
+      const savedWords = result.savedWords || [];
+      if (savedWords.length === 0) {
+        showExportMessage('No words to export', 'warning');
+        return;
       }
       
-      const translation = item.translation || '';
-      const date = new Date(item.savedAt).toLocaleDateString();
+      // Create enhanced CSV header with more comprehensive columns
+      const header = "Type,Text,Pronunciation,Part of Speech,Definition,Translation,Examples,Audio URL,Saved Date\n";
       
-      // Escape quotes and wrap in quotes
-      const escapeCSV = (str) => `"${(str || '').replace(/"/g, '""')}"`;
+      // Process each saved item
+      const csvRows = savedWords.map(item => {
+        const type = item.type || 'unknown';
+        const text = item.text || '';
+        const pronunciation = item.pronunciation || '';
+        const pos = item.partOfSpeech || '';
+        
+        // Combine all definitions with better formatting
+        let definitions = '';
+        let examples = '';
+        let translations = '';
+        
+        if (item.definitions && item.definitions.length > 0) {
+          definitions = item.definitions.map(def => def.text).join(' | ');
+          
+          // Collect examples from all definitions
+          const allExamples = item.definitions
+            .flatMap(def => def.examples || [])
+            .map(ex => ex.text || ex)
+            .filter(ex => ex && ex.trim())
+            .join(' | ');
+          examples = allExamples;
+          
+          // Collect translations from definitions
+          const defTranslations = item.definitions
+            .map(def => def.translation)
+            .filter(trans => trans && trans.trim())
+            .join(' | ');
+          translations = defTranslations || item.translation || '';
+        } else {
+          translations = item.translation || '';
+        }
+        
+        const audioUrl = item.audioUrl || '';
+        const date = item.savedAt ? new Date(item.savedAt).toLocaleDateString() : new Date().toLocaleDateString();
+        
+        // Enhanced CSV escaping function
+        const escapeCSV = (str) => {
+          if (!str) return '""';
+          const cleanStr = str.toString().replace(/"/g, '""');
+          return `"${cleanStr}"`;
+        };
+        
+        return [
+          escapeCSV(type),
+          escapeCSV(text),
+          escapeCSV(pronunciation),
+          escapeCSV(pos),
+          escapeCSV(definitions),
+          escapeCSV(translations),
+          escapeCSV(examples),
+          escapeCSV(audioUrl),
+          escapeCSV(date)
+        ].join(',');
+      });
       
-      return [
-        escapeCSV(type),
-        escapeCSV(text),
-        escapeCSV(pos),
-        escapeCSV(definitions),
-        escapeCSV(translation),
-        escapeCSV(examples),
-        escapeCSV(date)
-      ].join(',');
-    });
-    
-    const csvContent = "data:text/csv;charset=utf-8," + header + csvRows.join("\n");
-    
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "semantix_words.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+      const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + header + csvRows.join("\n");
+      
+      // Create download with timestamp
+      const timestamp = new Date().toISOString().split('T')[0];
+      const filename = `semantix_words_${timestamp}.csv`;
+      
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      showExportMessage(`Successfully exported ${savedWords.length} items to ${filename}`, 'success');
+      
+    } catch (error) {
+      console.error('Error exporting CSV:', error);
+      showExportMessage('Error occurred during export. Please try again.', 'error');
+    } finally {
+      // Restore button state
+      exportButton.textContent = originalText;
+      exportButton.disabled = false;
+    }
   });
 }
 
 function exportAsJSON() {
+  // Show loading feedback
+  const exportButton = document.querySelector('.export-card:nth-child(2) .btn');
+  const originalText = exportButton.textContent;
+  exportButton.textContent = 'Exporting...';
+  exportButton.disabled = true;
+  
   chrome.storage.local.get(['savedWords'], function(result) {
-    const savedWords = result.savedWords || [];
-    if (savedWords.length === 0) {
-      alert('No words to export');
-      return;
+    try {
+      const savedWords = result.savedWords || [];
+      if (savedWords.length === 0) {
+        showExportMessage('No words to export', 'warning');
+        return;
+      }
+      
+      // Create download with timestamp
+      const timestamp = new Date().toISOString().split('T')[0];
+      const filename = `semantix_words_${timestamp}.json`;
+      
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(savedWords, null, 2));
+      const link = document.createElement("a");
+      link.setAttribute("href", dataStr);
+      link.setAttribute("download", filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      showExportMessage(`Successfully exported ${savedWords.length} items to ${filename}`, 'success');
+      
+    } catch (error) {
+      console.error('Error exporting JSON:', error);
+      showExportMessage('Error occurred during export. Please try again.', 'error');
+    } finally {
+      // Restore button state
+      exportButton.textContent = originalText;
+      exportButton.disabled = false;
     }
-    
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(savedWords, null, 2));
-    const link = document.createElement("a");
-    link.setAttribute("href", dataStr);
-    link.setAttribute("download", "semantix_words.json");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
   });
 }
 
 function exportSettings() {
+  // Show loading feedback
+  const exportButton = document.querySelector('.export-card:nth-child(3) .btn');
+  const originalText = exportButton.textContent;
+  exportButton.textContent = 'Exporting...';
+  exportButton.disabled = true;
+  
   chrome.storage.local.get(null, function(result) {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(result, null, 2));
-    const link = document.createElement("a");
-    link.setAttribute("href", dataStr);
-    link.setAttribute("download", "semantix_settings.json");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    try {
+      // Filter out sensitive data and cached items for settings export
+      const settingsToExport = {};
+      const excludeKeys = ['savedWords', 'mwApiKey', 'geminiApiKey', 'elevenlabsApiKey'];
+      
+      Object.keys(result).forEach(key => {
+        if (!excludeKeys.includes(key) && !key.startsWith('qdp_')) {
+          settingsToExport[key] = result[key];
+        }
+      });
+      
+      // Add metadata
+      settingsToExport._exportInfo = {
+        exportedAt: new Date().toISOString(),
+        version: '1.0',
+        extension: 'Semantix'
+      };
+      
+      // Create download with timestamp
+      const timestamp = new Date().toISOString().split('T')[0];
+      const filename = `semantix_settings_${timestamp}.json`;
+      
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(settingsToExport, null, 2));
+      const link = document.createElement("a");
+      link.setAttribute("href", dataStr);
+      link.setAttribute("download", filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      showExportMessage(`Successfully exported settings to ${filename}`, 'success');
+      
+    } catch (error) {
+      console.error('Error exporting settings:', error);
+      showExportMessage('Error occurred during export. Please try again.', 'error');
+    } finally {
+      // Restore button state
+      exportButton.textContent = originalText;
+      exportButton.disabled = false;
+    }
   });
+}
+
+// Helper function to show export status messages
+function showExportMessage(message, type = 'info') {
+  // Create or update status element
+  let statusEl = document.getElementById('export-status');
+  if (!statusEl) {
+    statusEl = document.createElement('div');
+    statusEl.id = 'export-status';
+    statusEl.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      z-index: 10000;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      opacity: 0;
+      transform: translateY(-10px);
+      transition: all 0.3s ease;
+    `;
+    document.body.appendChild(statusEl);
+  }
+  
+  // Set message and styling based on type
+  statusEl.textContent = message;
+  const colors = {
+    success: { bg: '#10b981', text: '#ffffff' },
+    error: { bg: '#ef4444', text: '#ffffff' },
+    warning: { bg: '#f59e0b', text: '#ffffff' },
+    info: { bg: '#3b82f6', text: '#ffffff' }
+  };
+  
+  const color = colors[type] || colors.info;
+  statusEl.style.backgroundColor = color.bg;
+  statusEl.style.color = color.text;
+  
+  // Show the message
+  setTimeout(() => {
+    statusEl.style.opacity = '1';
+    statusEl.style.transform = 'translateY(0)';
+  }, 10);
+  
+  // Hide after 4 seconds
+  setTimeout(() => {
+    statusEl.style.opacity = '0';
+    statusEl.style.transform = 'translateY(-10px)';
+    setTimeout(() => {
+      if (statusEl.parentNode) {
+        statusEl.parentNode.removeChild(statusEl);
+      }
+    }, 300);
+  }, 4000);
 }
 
 document.addEventListener('DOMContentLoaded', function() {

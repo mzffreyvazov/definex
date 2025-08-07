@@ -130,9 +130,9 @@
   gap: 8px;
   background-color: #f8f9fa;
   padding: 8px 12px;
-  border-radius: 6px;
+  border-radius: 0;
   margin-bottom: 10px;
-  border-left: 4px solid #007acc;
+  border-left: 3px solid #007acc;
 }
 
 .qdp-translation-label {
@@ -157,9 +157,9 @@
   margin: 8px 0;
   padding: 10px 14px;
   background: linear-gradient(135deg, #f0f8f0 0%, #e8f5e8 100%);
-  border-radius: 6px;
+  border-radius: 0;
   border: 1px solid #d4edda;
-  border-left: 4px solid #28a745;
+  border-left: 3px solid #28a745;
   box-shadow: 0 2px 4px rgba(40, 167, 69, 0.1);
 }
 
@@ -242,11 +242,11 @@
 .qdp-example {
   color: #666;
   font-style: italic;
-  border-left: 4px solid #007acc;
+  border-left: 3px solid #007acc;
   padding: 8px 12px;
   margin: 8px 0;
   background-color: #f8fbff;
-  border-radius: 6px;
+  border-radius: 0;
   font-size: 13px;
   line-height: 1.4;
   font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -269,8 +269,8 @@
 .qdp-sentence-translation {
   background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
   padding: 12px;
-  border-radius: 8px;
-  border-left: 4px solid #007acc;
+  border-radius: 0;
+  border-left: 3px solid #007acc;
 }
 
 .qdp-sentence-label {
@@ -297,9 +297,9 @@
 .qdp-sentence-context {
   background-color: #fff3cd;
   border: 1px solid #ffeaa7;
-  border-left: 4px solid #fdcb6e;
+  border-left: 3px solid #fdcb6e;
   padding: 12px;
-  border-radius: 6px;
+  border-radius: 0;
   margin: 12px 0;
 }
 
@@ -375,9 +375,9 @@
 .qdp-key-phrase {
   background: linear-gradient(135deg, #f0f8f0 0%, #e8f5e8 100%);
   border: 1px solid #d4edda;
-  border-left: 4px solid #28a745;
+  border-left: 3px solid #28a745;
   padding: 10px 12px;
-  border-radius: 6px;
+  border-radius: 0;
   display: flex;
   flex-wrap: wrap;
   align-items: center;

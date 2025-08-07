@@ -4,8 +4,11 @@
   "version": "1.2",
   "description": "Instantly shows rich English definitions when you select a word.",
   "icons": {
-    "128": "icons/final.png"
-  },
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+},
   "permissions": [
     "activeTab",
     "storage",
@@ -36,10 +39,10 @@
     "default_title": "Semantix",
     "default_popup": "popup.html",
     "default_icon": {
-      "16": "icons/final.png",
-      "32": "icons/final.png",
-      "48": "icons/final.png",
-      "128": "icons/final.png"
+        "16": "icons/icon16.png",
+        "32": "icons/icon32.png",
+        "48": "icons/icon48.png",
+        "128": "icons/icon128.png"
     }
   }
 }

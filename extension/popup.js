@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Handle settings link click
+    // Handle settings button click
     optionsLink.addEventListener('click', (e) => {
         e.preventDefault();
         chrome.runtime.openOptionsPage();

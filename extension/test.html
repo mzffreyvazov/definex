@@ -132,25 +132,6 @@
             display: block;
         }
 
-        /* Settings Section Styles */
-        .settings-group {
-            background-color: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 32px;
-            margin-bottom: 24px;
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-        }
-
-        .settings-group-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: #1e293b;
-            margin-bottom: 20px;
-            padding-bottom: 12px;
-            border-bottom: 2px solid #3b82f6;
-        }
-
         .form-group {
             margin-bottom: 24px;
         }
@@ -182,23 +163,6 @@
             outline: none;
             border-color: #3b82f6;
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-
-        .info-box {
-            background-color: #f1f5f9;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            padding: 16px;
-            margin-top: 12px;
-            font-size: 13px;
-            color: #475569;
-            max-width: 500px;
-        }
-
-        .info-box.warning {
-            background-color: #fef3c7;
-            border-color: #fbbf24;
-            color: #92400e;
         }
 
         /* Saved Words Section */
@@ -433,85 +397,91 @@
         <div class="main-content">
             <!-- Settings Section -->
             <div class="content-section active" id="settings">
-                <div class="content-header">
-                    <h2>Settings</h2>
-                    <p>Configure your dictionary and translation preferences</p>
+    <div class="content-header">
+        <h2>Settings</h2>
+        <p>Configure your dictionary and translation preferences</p>
+    </div>
+    
+    <div class="content-body">
+        <form id="optionsForm">
+            <div class="words-container" style="margin-bottom: 24px;">
+                <div class="words-header">
+                    <h3>Dictionary Source</h3>
                 </div>
                 
-                <div class="content-body">
-                    <form id="optionsForm">
-                        <div class="settings-group">
-                            <h3 class="settings-group-title">Dictionary Source</h3>
-                            
-                            <div class="form-group">
-                                <label for="dictionarySource">Choose your preferred dictionary:</label>
-                                <select id="dictionarySource" name="dictionarySource">
-                                    <option value="gemini">Gemini AI</option>
-                                    <option value="openai">OpenAI</option>
-                                    <option value="local">Local Dictionary</option>
-                                </select>
-                                <div class="info-box">
-                                    AI-powered definitions from Google Gemini. Requires API key. 
-                                    Supports single words, phrases & sentences.
-                                </div>
-                            </div>
+                <div style="padding: 24px;">
+                    <div class="form-group">
+                        <label for="dictionarySource">Choose your preferred dictionary:</label>
+                        <select id="dictionarySource" name="dictionarySource">
+                            <option value="gemini">Gemini AI</option>
+                            <option value="openai">OpenAI</option>
+                            <option value="local">Local Dictionary</option>
+                        </select>
+                    </div>
 
-                            <div class="form-group" id="apiKeyGroup">
-                                <label for="apiKey">API Key:</label>
-                                <input type="password" id="apiKey" name="apiKey" placeholder="Enter your API key">
-                                <div class="info-box">
-                                    Enter your API key provided by your AI service.
-                                </div>
-                            </div>
+                    <div class="form-group" id="apiKeyGroup">
+                        <label for="apiKey">API Key:</label>
+                        <input type="password" id="apiKey" name="apiKey" placeholder="Enter your API key">
+                        <div style="font-size: 13px; color: #64748b; margin-top: 8px;">
+                            Enter your API key provided by your AI service.
                         </div>
-
-                        <div class="settings-group">
-                            <h3 class="settings-group-title">Translation Options</h3>
-                            <div class="info-box warning">
-                                Only available for AI-powered dictionary sources.
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="translateTo">Translate to:</label>
-                                <select id="translateTo" name="translateTo">
-                                    <option value="az">Azerbaijani</option>
-                                    <option value="tr">Turkish</option>
-                                    <option value="ru">Russian</option>
-                                    <option value="es">Spanish</option>
-                                    <option value="fr">French</option>
-                                    <option value="de">German</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="settings-group">
-                            <h3 class="settings-group-title">Display Options</h3>
-                            
-                            <div class="form-group">
-                                <label for="definitionScope">Definition Scope:</label>
-                                <select id="definitionScope" name="definitionScope">
-                                    <option value="detailed">Detailed</option>
-                                    <option value="concise">Concise</option>
-                                    <option value="minimal">Minimal</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="popupPosition">Popup Position:</label>
-                                <select id="popupPosition" name="popupPosition">
-                                    <option value="auto">Auto</option>
-                                    <option value="top">Top</option>
-                                    <option value="bottom">Bottom</option>
-                                    <option value="left">Left</option>
-                                    <option value="right">Right</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <button type="submit" class="btn btn-primary">Save Settings</button>
-                    </form>
+                    </div>
                 </div>
             </div>
+
+            <div class="words-container" style="margin-bottom: 24px;">
+                <div class="words-header">
+                    <h3>Translation Options</h3>
+                    <span style="font-size: 12px; color: #f59e0b; background: #fef3c7; padding: 4px 8px; border-radius: 4px;">AI only</span>
+                </div>
+                
+                <div style="padding: 24px;">
+                    <div class="form-group">
+                        <label for="translateTo">Translate to:</label>
+                        <select id="translateTo" name="translateTo">
+                            <option value="az">Azerbaijani</option>
+                            <option value="tr">Turkish</option>
+                            <option value="ru">Russian</option>
+                            <option value="es">Spanish</option>
+                            <option value="fr">French</option>
+                            <option value="de">German</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="words-container" style="margin-bottom: 32px;">
+                <div class="words-header">
+                    <h3>Display Options</h3>
+                </div>
+                
+                <div style="padding: 24px;">
+                    <div class="form-group">
+                        <label for="definitionScope">Definition Scope:</label>
+                        <select id="definitionScope" name="definitionScope">
+                            <option value="detailed">Detailed</option>
+                            <option value="concise">Concise</option>
+                            <option value="minimal">Minimal</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="popupPosition">Popup Position:</label>
+                        <select id="popupPosition" name="popupPosition">
+                            <option value="auto">Auto</option>
+                            <option value="top">Top</option>
+                            <option value="bottom">Bottom</option>
+                            <option value="left">Left</option>
+                            <option value="right">Right</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Save Settings</button>
+        </form>
+    </div>
+</div>
 
             <!-- Saved Words Section -->
             <div class="content-section" id="saved-words">

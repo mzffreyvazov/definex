@@ -234,14 +234,17 @@ function loadSavedWords() {
                 let examplesText = '';
                 if (item.definitions && item.definitions.length > 0) {
                   const allExamples = item.definitions.flatMap(def => def.examples || []);
-                  examplesText = allExamples.map(ex => `"${ex.text}"`).join('; ');
+                  examplesText = allExamples.map((ex, index) => `${index + 1}. ${ex.text}`).join('<br>');
                 }
                 
                 // Handle key phrases for sentences
                 if (item.keyPhrases && item.keyPhrases.length > 0) {
-                  const keyPhrasesText = item.keyPhrases.map(phrase => `"${phrase.original}" → "${phrase.translation}"`).join('; ');
+                  const keyPhrasesText = item.keyPhrases.map((phrase, index) => {
+                    const startIndex = examplesText ? (item.definitions?.flatMap(def => def.examples || []).length || 0) : 0;
+                    return `${startIndex + index + 1}. ${phrase.original} → ${phrase.translation}`;
+                  }).join('<br>');
                   if (examplesText) {
-                    examplesText += '; ' + keyPhrasesText;
+                    examplesText += '<br>' + keyPhrasesText;
                   } else {
                     examplesText = keyPhrasesText;
                   }

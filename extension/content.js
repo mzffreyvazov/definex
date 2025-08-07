@@ -205,10 +205,17 @@ function formatData(data, ttsEnabled = false) {
   // Start with the header, including translation if available
   let headerHTML = `
     <div class="qdp-header">
-      <span class="qdp-word">${word}</span>
-      <span class="qdp-pron">${pronunciation ? pronunciation.pron : ''}</span>
-      ${audioUrl ? `<button id="qdp-audio-btn" title="Play pronunciation" data-audio-src="${audioUrl}">🔊</button>` : ''}
-      ${isPhrase && ttsEnabled ? `<button id="qdp-tts-phrase-btn" title="Play phrase with TTS" data-tts-text="${word}">🔊</button>` : ''}
+      <div class="qdp-header-content">
+        <div class="qdp-header-main">
+          <span class="qdp-word">${word}</span>
+          <span class="qdp-pron">${pronunciation ? pronunciation.pron : ''}</span>
+        </div>
+      </div>
+      <div class="qdp-actions">
+        ${audioUrl ? `<button id="qdp-audio-btn" title="Play pronunciation" data-audio-src="${audioUrl}">🔊</button>` : ''}
+        ${isPhrase && ttsEnabled ? `<button id="qdp-tts-phrase-btn" title="Play phrase with TTS" data-tts-text="${word}">🔊</button>` : ''}
+        <button id="qdp-save-btn" title="Save word" data-word-data='${JSON.stringify(data).replace(/'/g, "&#39;")}'>📖</button>
+      </div>
     </div>
   `;
 
@@ -268,7 +275,10 @@ function formatTranslationData(data, ttsEnabled = false) {
       <div class="qdp-sentence-original">
         <span class="qdp-sentence-label">Original:</span>
         <div class="qdp-sentence-text">${data.originalSentence}
-          ${ttsEnabled ? `<button id="qdp-tts-original-btn" title="Play original sentence" data-tts-text="${data.originalSentence}">🔊</button>` : ''}
+          <div class="qdp-actions">
+            ${ttsEnabled ? `<button id="qdp-tts-original-btn" title="Play original sentence" data-tts-text="${data.originalSentence}">🔊</button>` : ''}
+            <button id="qdp-save-btn" title="Save sentence" data-sentence-data='${JSON.stringify(data).replace(/'/g, "&#39;")}'>📖</button>
+          </div>
         </div>
       </div>
       <div class="qdp-sentence-translation">
@@ -348,6 +358,12 @@ function addPopupEventListeners() {
   ttsPhraseBtns.forEach(btn => {
     btn.addEventListener('click', playTTS);
   });
+  
+  // Add save button event listener
+  const saveButton = document.getElementById('qdp-save-btn');
+  if (saveButton) {
+    saveButton.addEventListener('click', saveWord);
+  }
   
   // Add key phrases toggle listener
   const keyPhrasesHeader = document.getElementById('qdp-key-phrases-header');
@@ -432,6 +448,90 @@ function playTTS(event) {
             .catch(error => {
                 console.error('TTS fetch failed:', error);
             });
+    }
+}
+
+function saveWord(event) {
+    const wordData = event.target.getAttribute('data-word-data');
+    const sentenceData = event.target.getAttribute('data-sentence-data');
+    
+    if (wordData) {
+        // Handle word/phrase saving
+        try {
+            const data = JSON.parse(wordData);
+            const saveData = {
+                id: Date.now() + Math.random(), // Unique ID
+                text: data.word,
+                type: data.word.split(/\s+/).length > 1 ? 'phrase' : 'word',
+                partOfSpeech: data.pos ? data.pos.join(', ') : '',
+                definitions: data.definition.map(def => ({
+                    text: def.text,
+                    translation: def.translation || null,
+                    examples: def.example.map(ex => ({
+                        text: ex.text,
+                        translation: ex.translation || null
+                    }))
+                })),
+                translation: data.translation || null,
+                pronunciation: data.pronunciation && data.pronunciation[0] ? data.pronunciation[0].pron : '',
+                audioUrl: data.pronunciation && data.pronunciation[0] ? data.pronunciation[0].url : '',
+                savedAt: new Date().toISOString()
+            };
+            
+            // Send to background script to save
+            chrome.runtime.sendMessage({
+                type: 'saveWord',
+                data: saveData
+            });
+            
+            // Update button to show saved state
+            event.target.innerHTML = '✓';
+            event.target.title = 'Saved!';
+            event.target.style.color = '#059669';
+            setTimeout(() => {
+                event.target.innerHTML = '📖';
+                event.target.title = 'Save word';
+                event.target.style.color = '';
+            }, 2000);
+            
+        } catch (error) {
+            console.error('Error saving word:', error);
+        }
+    } else if (sentenceData) {
+        // Handle sentence saving
+        try {
+            const data = JSON.parse(sentenceData);
+            const saveData = {
+                id: Date.now() + Math.random(), // Unique ID
+                text: data.originalSentence,
+                type: 'sentence',
+                partOfSpeech: '',
+                definitions: [],
+                translation: data.translation || null,
+                targetLanguage: data.targetLanguage || '',
+                keyPhrases: data.keyPhrases || [],
+                savedAt: new Date().toISOString()
+            };
+            
+            // Send to background script to save
+            chrome.runtime.sendMessage({
+                type: 'saveWord',
+                data: saveData
+            });
+            
+            // Update button to show saved state
+            event.target.innerHTML = '✓';
+            event.target.title = 'Saved!';
+            event.target.style.color = '#059669';
+            setTimeout(() => {
+                event.target.innerHTML = '📖';
+                event.target.title = 'Save sentence';
+                event.target.style.color = '';
+            }, 2000);
+            
+        } catch (error) {
+            console.error('Error saving sentence:', error);
+        }
     }
 }
 

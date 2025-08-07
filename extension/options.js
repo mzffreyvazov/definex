@@ -191,7 +191,7 @@ function loadSavedWords() {
     const wordsList = document.getElementById('wordsList');
     const wordsCount = document.querySelector('.words-count');
     
-    wordsCount.textContent = `${savedWords.length} words saved`;
+    wordsCount.textContent = `${savedWords.length} items saved`;
     
     if (savedWords.length === 0) {
       wordsList.innerHTML = `
@@ -204,26 +204,108 @@ function loadSavedWords() {
         </div>
       `;
     } else {
-      wordsList.innerHTML = savedWords.map(word => `
-        <div class="word-item">
-          <div class="word-info">
-            <h4>${word.word}</h4>
-            <div class="word-definition">${word.definition}</div>
-            <div class="word-date">${new Date(word.timestamp).toLocaleDateString()}</div>
-          </div>
-          <div class="word-actions">
-            <button class="btn btn-danger" onclick="removeWord('${word.word}')">Remove</button>
-          </div>
+      // Create table structure
+      wordsList.innerHTML = `
+        <div class="words-table-container">
+          <table class="words-table">
+            <thead>
+              <tr>
+                <th class="text-col">Text</th>
+                <th class="type-col">Content Type</th>
+                <th class="pronunciation-col">Pronunciation</th>
+                <th class="pos-col">Part of Speech</th>
+                <th class="definition-col">Definition</th>
+                <th class="translation-col">Translation</th>
+                <th class="examples-col">Examples</th>
+                <th class="date-col">Date Added</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${savedWords.map(item => {
+                const typeIcon = item.type === 'sentence' ? '📝' : item.type === 'phrase' ? '💬' : '📖';
+                
+                // Prepare definitions text
+                let definitionsText = '';
+                if (item.definitions && item.definitions.length > 0) {
+                  definitionsText = item.definitions.map(def => def.text).join('; ');
+                }
+                
+                // Prepare examples text
+                let examplesText = '';
+                if (item.definitions && item.definitions.length > 0) {
+                  const allExamples = item.definitions.flatMap(def => def.examples || []);
+                  examplesText = allExamples.map(ex => `"${ex.text}"`).join('; ');
+                }
+                
+                // Handle key phrases for sentences
+                if (item.keyPhrases && item.keyPhrases.length > 0) {
+                  const keyPhrasesText = item.keyPhrases.map(phrase => `"${phrase.original}" → "${phrase.translation}"`).join('; ');
+                  if (examplesText) {
+                    examplesText += '; ' + keyPhrasesText;
+                  } else {
+                    examplesText = keyPhrasesText;
+                  }
+                }
+                
+                return `
+                  <tr class="word-row" data-type="${item.type}" data-id="${item.id}">
+                    <td class="text-cell">
+                      <div class="cell-content">
+                        <span class="word-text">${item.text}</span>
+                      </div>
+                    </td>
+                    <td class="type-cell">
+                      <div class="cell-content">
+                        <span class="type-badge">${item.type}</span>
+                      </div>
+                    </td>
+                    <td class="pronunciation-cell">
+                      <div class="cell-content">
+                        ${item.pronunciation || '-'}
+                      </div>
+                    </td>
+                    <td class="pos-cell">
+                      <div class="cell-content">
+                        ${item.partOfSpeech ? `<span class="pos-badge">${item.partOfSpeech}</span>` : '-'}
+                      </div>
+                    </td>
+                    <td class="definition-cell">
+                      <div class="cell-content" title="${definitionsText}">
+                        ${definitionsText || '-'}
+                      </div>
+                    </td>
+                    <td class="translation-cell">
+                      <div class="cell-content" title="${item.translation || ''}">
+                        ${item.translation || '-'}
+                      </div>
+                    </td>
+                    <td class="examples-cell">
+                      <div class="cell-content" title="${examplesText}">
+                        ${examplesText || '-'}
+                      </div>
+                    </td>
+                    <td class="date-cell">
+                      <div class="cell-content">
+                        ${new Date(item.savedAt).toLocaleDateString()}
+                      </div>
+                    </td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
         </div>
-      `).join('');
+      `;
     }
+    
+    // Add functionality after loading the words (removed checkbox functionality)
   });
 }
 
-function removeWord(word) {
+function removeWord(wordId) {
   chrome.storage.local.get(['savedWords'], function(result) {
     const savedWords = result.savedWords || [];
-    const updatedWords = savedWords.filter(w => w.word !== word);
+    const updatedWords = savedWords.filter(w => w.id !== wordId);
     chrome.storage.local.set({ savedWords: updatedWords }, function() {
       loadSavedWords();
     });
@@ -253,11 +335,45 @@ function exportAsCSV() {
       return;
     }
     
-    const csvContent = "data:text/csv;charset=utf-8,"
-      + "Word,Definition,Date\n"
-      + savedWords.map(word => 
-          `"${word.word}","${word.definition}","${new Date(word.timestamp).toLocaleDateString()}"`
-        ).join("\n");
+    // Create CSV header
+    const header = "Type,Text,Part of Speech,Definition,Translation,Examples,Date\n";
+    
+    // Process each saved item
+    const csvRows = savedWords.map(item => {
+      const type = item.type;
+      const text = item.text;
+      const pos = item.partOfSpeech || '';
+      
+      // Combine all definitions
+      let definitions = '';
+      let examples = '';
+      
+      if (item.definitions && item.definitions.length > 0) {
+        definitions = item.definitions.map(def => def.text).join('; ');
+        examples = item.definitions
+          .flatMap(def => def.examples || [])
+          .map(ex => ex.text)
+          .join('; ');
+      }
+      
+      const translation = item.translation || '';
+      const date = new Date(item.savedAt).toLocaleDateString();
+      
+      // Escape quotes and wrap in quotes
+      const escapeCSV = (str) => `"${(str || '').replace(/"/g, '""')}"`;
+      
+      return [
+        escapeCSV(type),
+        escapeCSV(text),
+        escapeCSV(pos),
+        escapeCSV(definitions),
+        escapeCSV(translation),
+        escapeCSV(examples),
+        escapeCSV(date)
+      ].join(',');
+    });
+    
+    const csvContent = "data:text/csv;charset=utf-8," + header + csvRows.join("\n");
     
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
@@ -368,16 +484,15 @@ document.addEventListener('DOMContentLoaded', function() {
   if (searchInput) {
     searchInput.addEventListener('input', function() {
       const searchTerm = this.value.toLowerCase();
-      const wordItems = document.querySelectorAll('.word-item');
+      const wordRows = document.querySelectorAll('.word-row');
       
-      wordItems.forEach(item => {
-        const word = item.querySelector('h4').textContent.toLowerCase();
-        const definition = item.querySelector('.word-definition').textContent.toLowerCase();
+      wordRows.forEach(row => {
+        const allText = row.textContent.toLowerCase();
         
-        if (word.includes(searchTerm) || definition.includes(searchTerm)) {
-          item.style.display = 'flex';
+        if (allText.includes(searchTerm)) {
+          row.style.display = 'table-row';
         } else {
-          item.style.display = 'none';
+          row.style.display = 'none';
         }
       });
     });

@@ -235,4 +235,40 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     return true;
   }
+  
+  if (message.type === 'saveWord') {
+    const wordData = message.data;
+    
+    chrome.storage.local.get(['savedWords'], (result) => {
+      const savedWords = result.savedWords || [];
+      
+      // Check if word already exists (avoid duplicates)
+      const existingWordIndex = savedWords.findIndex(word => 
+        word.text.toLowerCase() === wordData.text.toLowerCase() && 
+        word.type === wordData.type
+      );
+      
+      if (existingWordIndex === -1) {
+        // Add new word
+        savedWords.unshift(wordData); // Add to beginning of array
+        
+        // Limit to 1000 saved words to prevent storage issues
+        if (savedWords.length > 1000) {
+          savedWords.splice(1000);
+        }
+        
+        chrome.storage.local.set({ savedWords: savedWords }, () => {
+          console.log('Word saved successfully:', wordData.text);
+        });
+      } else {
+        // Update existing word with new data
+        savedWords[existingWordIndex] = { ...savedWords[existingWordIndex], ...wordData };
+        chrome.storage.local.set({ savedWords: savedWords }, () => {
+          console.log('Word updated successfully:', wordData.text);
+        });
+      }
+    });
+    
+    return true;
+  }
 });

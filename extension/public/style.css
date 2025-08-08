@@ -24,6 +24,68 @@
   display: block !important;
 }
 
+/* =========================
+   Skeleton Loading Styles
+   ========================= */
+.qdp-skeleton .skeleton-word {
+  width: 160px;
+  height: 20px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #eee 25%, #f5f5f5 50%, #eee 75%);
+  background-size: 400% 100%;
+  animation: qdp-shimmer 1.2s ease-in-out infinite;
+}
+
+.qdp-skeleton .skeleton-pron {
+  width: 100px;
+  height: 14px;
+  margin-top: 6px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #eee 25%, #f5f5f5 50%, #eee 75%);
+  background-size: 400% 100%;
+  animation: qdp-shimmer 1.2s ease-in-out infinite;
+}
+
+.qdp-skeleton .skeleton-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(90deg, #eee 25%, #f5f5f5 50%, #eee 75%);
+  background-size: 400% 100%;
+  animation: qdp-shimmer 1.2s ease-in-out infinite;
+}
+
+.qdp-skeleton .skeleton-line {
+  height: 12px;
+  margin: 8px 0;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #eee 25%, #f5f5f5 50%, #eee 75%);
+  background-size: 400% 100%;
+  animation: qdp-shimmer 1.2s ease-in-out infinite;
+}
+
+.qdp-skeleton .skeleton-line.w-95 { width: 95%; }
+.qdp-skeleton .skeleton-line.w-90 { width: 90%; }
+.qdp-skeleton .skeleton-line.w-85 { width: 85%; }
+.qdp-skeleton .skeleton-line.w-80 { width: 80%; }
+.qdp-skeleton .skeleton-line.w-75 { width: 75%; }
+.qdp-skeleton .skeleton-line.w-60 { width: 60%; }
+
+.qdp-skeleton .skeleton-translation {
+  height: 16px;
+  width: 220px;
+  margin: 8px 0 10px 0;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #e6f0ff 25%, #f0f6ff 50%, #e6f0ff 75%);
+  background-size: 400% 100%;
+  animation: qdp-shimmer 1.2s ease-in-out infinite;
+}
+
+@keyframes qdp-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
 /* Sentence mode with larger width */
 #quick-def-popup.qdp-sentence-mode {
   max-width: 650px;

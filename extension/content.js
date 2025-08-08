@@ -84,6 +84,37 @@ function getSourceDisplayName(source) {
   }
 }
 
+// Build skeleton loading HTML for the popup while we fetch data
+function buildSkeletonPlaceholder(isSentence) {
+  const definitionLines = isSentence
+    ? '<div class="skeleton-line w-95"></div><div class="skeleton-line w-90"></div><div class="skeleton-line w-85"></div><div class="skeleton-line w-80"></div>'
+    : '<div class="skeleton-line w-90"></div><div class="skeleton-line w-75"></div><div class="skeleton-line w-60"></div>';
+
+  const translationHeader = isSentence
+    ? '<div class="skeleton-translation"></div>'
+    : '';
+
+  return `
+    <div class="qdp-skeleton">
+      <div class="qdp-header">
+        <div class="qdp-header-content">
+          <div class="skeleton-word"></div>
+          <div class="skeleton-pron"></div>
+        </div>
+        <div class="qdp-actions">
+          <div class="skeleton-icon"></div>
+          <div class="skeleton-icon"></div>
+          <div class="skeleton-icon"></div>
+        </div>
+      </div>
+      ${translationHeader}
+      <div class="qdp-body">
+        ${definitionLines}
+      </div>
+    </div>
+  `;
+}
+
 function handleSelection(event) {
   // Prevent default behavior that might interfere
   event.preventDefault();
@@ -135,26 +166,10 @@ function handleSelection(event) {
     // Remove existing popup if it exists
     clearPopupData();
     
-    const sourceDisplayName = getSourceDisplayName(source);
-    
-    let loadingMessage;
-    if (isSentence) {
-      loadingMessage = `<span style="font-family: 'Open Sans', sans-serif;">Translating sentence "<strong>${selectedText.substring(0, 50)}${selectedText.length > 50 ? '...' : ''}</strong>" with Gemini AI...</span>`;
-    } else if (source === 'gemini') {
-      // Check if it's a single word or phrase for loading message
-      const isPhrase = words.length > 1;
-      
-      if (isPhrase) {
-        loadingMessage = `<span style="font-family: 'Open Sans', sans-serif;">Loading definition for "<strong>${selectedText}</strong>" from <em>${sourceDisplayName}</em>...</span>`;
-      } else {
-        loadingMessage = `<span style="font-family: 'Open Sans', sans-serif;">Loading definition for "<strong>${selectedText}</strong>" from <em>${sourceDisplayName}</em> with audio from <em>Cambridge</em>...</span>`;
-      }
-    } else {
-      loadingMessage = `<span style="font-family: 'Open Sans', sans-serif;">Loading definition for "<strong>${selectedText}</strong>" from <em>${sourceDisplayName}</em>...</span>`;
-    }
-    
-    // Create a placeholder popup while fetching
-    createPopup(mouseX, mouseY, loadingMessage, isSentence);
+    // Create a skeleton placeholder popup while fetching
+    const skeleton = buildSkeletonPlaceholder(isSentence);
+    createPopup(mouseX, mouseY, skeleton, isSentence);
+    const skeletonShownAt = performance.now();
     
     // Send the selected text to the background script
     const messageType = isSentence ? 'translateSentence' : 'getDefinition';
@@ -163,29 +178,33 @@ function handleSelection(event) {
       : { type: messageType, word: selectedText };
       
     chrome.runtime.sendMessage(messageData, (response) => {
-      if (chrome.runtime.lastError) {
-        // Handle potential errors like the background script not being ready
-        updatePopupContent('Error: Could not connect to the extension.');
-        return;
-      }
-
-      if (response.status === 'success') {
-        const ttsEnabled = response.ttsEnabled || false;
-        const elevenlabsApiKey = response.elevenlabsApiKey || '';
-        
-        // Store ElevenLabs API key globally for TTS usage
-        window.elevenlabsApiKey = elevenlabsApiKey;
-        
-        const content = isSentence ? formatTranslationData(response.data, ttsEnabled) : formatData(response.data, ttsEnabled);
-        updatePopupContent(content);
-      } else if (response.status === 'noLanguage') {
-        // Show message to configure target language in options
-        updatePopupContent(`<div style="padding: 20px; text-align: center; font-family: 'Open Sans', sans-serif; line-height: 1.5;">
-          <div style="font-size: 16px; font-weight: 600; color: #dc3545; margin-bottom: 12px;">⚠️ No Target Language Selected</div>
-          <div style="font-size: 14px; color: #666;">${response.message}</div>
-        </div>`);
+      const MIN_SKELETON_MS = 400;
+      const showAfter = () => {
+        if (chrome.runtime.lastError) {
+          updatePopupContent('Error: Could not connect to the extension.');
+          return;
+        }
+        if (response.status === 'success') {
+          const ttsEnabled = response.ttsEnabled || false;
+          const elevenlabsApiKey = response.elevenlabsApiKey || '';
+          window.elevenlabsApiKey = elevenlabsApiKey;
+          const content = isSentence ? formatTranslationData(response.data, ttsEnabled) : formatData(response.data, ttsEnabled);
+          updatePopupContent(content);
+        } else if (response.status === 'noLanguage') {
+          updatePopupContent(`<div style="padding: 20px; text-align: center; font-family: 'Open Sans', sans-serif; line-height: 1.5;">
+            <div style="font-size: 16px; font-weight: 600; color: #dc3545; margin-bottom: 12px;">⚠️ No Target Language Selected</div>
+            <div style="font-size: 14px; color: #666;">${response.message}</div>
+          </div>`);
+        } else {
+          updatePopupContent(`Error: ${response.message || (isSentence ? 'Translation failed.' : 'Definition not found.')}`);
+        }
+      };
+      const elapsed = performance.now() - skeletonShownAt;
+      const delay = Math.max(0, MIN_SKELETON_MS - elapsed);
+      if (delay > 0) {
+        setTimeout(showAfter, delay);
       } else {
-        updatePopupContent(`Error: ${response.message || (isSentence ? 'Translation failed.' : 'Definition not found.')}`);
+        showAfter();
       }
     });
   });

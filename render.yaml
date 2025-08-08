@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: semantix-api
+    rootDir: api-server
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    branch: main
+    autoDeploy: true
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: RATE_LIMIT_WINDOW_MS
+        value: 60000
+      - key: RATE_LIMIT_MAX
+        value: 60

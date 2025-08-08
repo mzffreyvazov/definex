@@ -231,9 +231,21 @@ function formatData(data, ttsEnabled = false) {
         </div>
       </div>
       <div class="qdp-actions">
-        ${audioUrl ? `<button id="qdp-audio-btn" title="Play pronunciation" data-audio-src="${audioUrl}">🔊</button>` : ''}
-        ${isPhrase && ttsEnabled ? `<button id="qdp-tts-phrase-btn" title="Play phrase with TTS" data-tts-text="${word}">🔊</button>` : ''}
-        <button id="qdp-save-btn" title="Save word" data-word-data='${JSON.stringify(data).replace(/'/g, "&#39;")}'>📖</button>
+        ${audioUrl ? `<button id="qdp-audio-btn" class="qdp-icon-btn" title="Play pronunciation" data-audio-src="${audioUrl}">
+          <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M7.46968 1.05085C7.64122 1.13475 7.75 1.30904 7.75 1.5V13.5C7.75 13.691 7.64122 13.8653 7.46968 13.9492C7.29813 14.0331 7.09377 14.0119 6.94303 13.8947L3.2213 11H1.5C0.671571 11 0 10.3284 0 9.5V5.5C0 4.67158 0.671573 4 1.5 4H3.2213L6.94303 1.10533C7.09377 0.988085 7.29813 0.966945 7.46968 1.05085ZM6.75 2.52232L3.69983 4.89468C3.61206 4.96294 3.50405 5 3.39286 5H1.5C1.22386 5 1 5.22386 1 5.5V9.5C1 9.77615 1.22386 10 1.5 10H3.39286C3.50405 10 3.61206 10.0371 3.69983 10.1053L6.75 12.4777V2.52232ZM10.2784 3.84804C10.4623 3.72567 10.7106 3.77557 10.833 3.95949C12.2558 6.09798 12.2558 8.90199 10.833 11.0405C10.7106 11.2244 10.4623 11.2743 10.2784 11.1519C10.0944 11.0296 10.0445 10.7813 10.1669 10.5973C11.4111 8.72728 11.4111 6.27269 10.1669 4.40264C10.0445 4.21871 10.0944 3.97041 10.2784 3.84804ZM12.6785 1.43044C12.5356 1.2619 12.2832 1.24104 12.1147 1.38386C11.9462 1.52667 11.9253 1.77908 12.0681 1.94762C14.7773 5.14488 14.7773 9.85513 12.0681 13.0524C11.9253 13.2209 11.9462 13.4733 12.1147 13.6161C12.2832 13.759 12.5356 13.7381 12.6785 13.5696C15.6406 10.0739 15.6406 4.92612 12.6785 1.43044Z" fill="currentColor" fill-rule="evenodd" clip-rule="evenodd"></path>
+          </svg>
+        </button>` : ''}
+        ${isPhrase && ttsEnabled ? `<button id="qdp-tts-phrase-btn" class="qdp-icon-btn" title="Play phrase with TTS" data-tts-text="${word}">
+          <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M7.46968 1.05085C7.64122 1.13475 7.75 1.30904 7.75 1.5V13.5C7.75 13.691 7.64122 13.8653 7.46968 13.9492C7.29813 14.0331 7.09377 14.0119 6.94303 13.8947L3.2213 11H1.5C0.671571 11 0 10.3284 0 9.5V5.5C0 4.67158 0.671573 4 1.5 4H3.2213L6.94303 1.10533C7.09377 0.988085 7.29813 0.966945 7.46968 1.05085ZM6.75 2.52232L3.69983 4.89468C3.61206 4.96294 3.50405 5 3.39286 5H1.5C1.22386 5 1 5.22386 1 5.5V9.5C1 9.77615 1.22386 10 1.5 10H3.39286C3.50405 10 3.61206 10.0371 3.69983 10.1053L6.75 12.4777V2.52232ZM10.2784 3.84804C10.4623 3.72567 10.7106 3.77557 10.833 3.95949C12.2558 6.09798 12.2558 8.90199 10.833 11.0405C10.7106 11.2244 10.4623 11.2743 10.2784 11.1519C10.0944 11.0296 10.0445 10.7813 10.1669 10.5973C11.4111 8.72728 11.4111 6.27269 10.1669 4.40264C10.0445 4.21871 10.0944 3.97041 10.2784 3.84804ZM12.6785 1.43044C12.5356 1.2619 12.2832 1.24104 12.1147 1.38386C11.9462 1.52667 11.9253 1.77908 12.0681 1.94762C14.7773 5.14488 14.7773 9.85513 12.0681 13.0524C11.9253 13.2209 11.9462 13.4733 12.1147 13.6161C12.2832 13.759 12.5356 13.7381 12.6785 13.5696C15.6406 10.0739 15.6406 4.92612 12.6785 1.43044Z" fill="currentColor" fill-rule="evenodd" clip-rule="evenodd"></path>
+          </svg>
+        </button>` : ''}
+        <button id="qdp-save-btn" class="qdp-icon-btn" title="Save word" data-word-data='${JSON.stringify(data).replace(/'/g, "&#39;")}'>
+          <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M3 2.5C3 2.22386 3.22386 2 3.5 2H11.5C11.7761 2 12 2.22386 12 2.5V13.5C12 13.6818 11.9014 13.8492 11.7424 13.9373C11.5834 14.0254 11.3891 14.0203 11.235 13.924L7.5 11.5896L3.765 13.924C3.61087 14.0203 3.41659 14.0254 3.25762 13.9373C3.09864 13.8492 3 13.6818 3 13.5V2.5ZM4 3V12.5979L6.97 10.7416C7.29427 10.539 7.70573 10.539 8.03 10.7416L11 12.5979V3H4Z" fill="currentColor" fill-rule="evenodd" clip-rule="evenodd"></path>
+          </svg>
+        </button>
       </div>
     </div>
   `;
@@ -295,8 +307,16 @@ function formatTranslationData(data, ttsEnabled = false) {
         <span class="qdp-sentence-label">Original:</span>
         <div class="qdp-sentence-text">${data.originalSentence}
           <div class="qdp-actions">
-            ${ttsEnabled ? `<button id="qdp-tts-original-btn" title="Play original sentence" data-tts-text="${data.originalSentence}">🔊</button>` : ''}
-            <button id="qdp-save-btn" title="Save sentence" data-sentence-data='${JSON.stringify(data).replace(/'/g, "&#39;")}'>📖</button>
+            ${ttsEnabled ? `<button id="qdp-tts-original-btn" class="qdp-icon-btn" title="Play original sentence" data-tts-text="${data.originalSentence}">
+              <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M7.46968 1.05085C7.64122 1.13475 7.75 1.30904 7.75 1.5V13.5C7.75 13.691 7.64122 13.8653 7.46968 13.9492C7.29813 14.0331 7.09377 14.0119 6.94303 13.8947L3.2213 11H1.5C0.671571 11 0 10.3284 0 9.5V5.5C0 4.67158 0.671573 4 1.5 4H3.2213L6.94303 1.10533C7.09377 0.988085 7.29813 0.966945 7.46968 1.05085ZM6.75 2.52232L3.69983 4.89468C3.61206 4.96294 3.50405 5 3.39286 5H1.5C1.22386 5 1 5.22386 1 5.5V9.5C1 9.77615 1.22386 10 1.5 10H3.39286C3.50405 10 3.61206 10.0371 3.69983 10.1053L6.75 12.4777V2.52232ZM10.2784 3.84804C10.4623 3.72567 10.7106 3.77557 10.833 3.95949C12.2558 6.09798 12.2558 8.90199 10.833 11.0405C10.7106 11.2244 10.4623 11.2743 10.2784 11.1519C10.0944 11.0296 10.0445 10.7813 10.1669 10.5973C11.4111 8.72728 11.4111 6.27269 10.1669 4.40264C10.0445 4.21871 10.0944 3.97041 10.2784 3.84804ZM12.6785 1.43044C12.5356 1.2619 12.2832 1.24104 12.1147 1.38386C11.9462 1.52667 11.9253 1.77908 12.0681 1.94762C14.7773 5.14488 14.7773 9.85513 12.0681 13.0524C11.9253 13.2209 11.9462 13.4733 12.1147 13.6161C12.2832 13.759 12.5356 13.7381 12.6785 13.5696C15.6406 10.0739 15.6406 4.92612 12.6785 1.43044Z" fill="currentColor" fill-rule="evenodd" clip-rule="evenodd"></path>
+              </svg>
+            </button>` : ''}
+            <button id="qdp-save-btn" class="qdp-icon-btn" title="Save sentence" data-sentence-data='${JSON.stringify(data).replace(/'/g, "&#39;")}'>
+              <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M3 2.5C3 2.22386 3.22386 2 3.5 2H11.5C11.7761 2 12 2.22386 12 2.5V13.5C12 13.6818 11.9014 13.8492 11.7424 13.9373C11.5834 14.0254 11.3891 14.0203 11.235 13.924L7.5 11.5896L3.765 13.924C3.61087 14.0203 3.41659 14.0254 3.25762 13.9373C3.09864 13.8492 3 13.6818 3 13.5V2.5ZM4 3V12.5979L6.97 10.7416C7.29427 10.539 7.70573 10.539 8.03 10.7416L11 12.5979V3H4Z" fill="currentColor" fill-rule="evenodd" clip-rule="evenodd"></path>
+              </svg>
+            </button>
           </div>
         </div>
       </div>
@@ -392,7 +412,8 @@ function addPopupEventListeners() {
 }
 
 function playAudio(event) {
-    const audioSrc = event.target.getAttribute('data-audio-src');
+    const button = event.currentTarget || event.target;
+    const audioSrc = button.getAttribute('data-audio-src');
     if (audioSrc) {
         const audio = new Audio(audioSrc);
         audio.play();
@@ -400,7 +421,8 @@ function playAudio(event) {
 }
 
 function playTTS(event) {
-    const text = event.target.getAttribute('data-tts-text');
+    const button = event.currentTarget || event.target;
+    const text = button.getAttribute('data-tts-text');
     
     if (text) {
         // Check word count to ensure it's a phrase or sentence
@@ -471,8 +493,10 @@ function playTTS(event) {
 }
 
 function saveWord(event) {
-    const wordData = event.target.getAttribute('data-word-data');
-    const sentenceData = event.target.getAttribute('data-sentence-data');
+    // Support clicks on SVG/path inside the button
+    const button = event.currentTarget || event.target;
+    const wordData = button.getAttribute('data-word-data');
+    const sentenceData = button.getAttribute('data-sentence-data');
     
     if (wordData) {
         // Handle word/phrase saving
@@ -504,13 +528,16 @@ function saveWord(event) {
             });
             
             // Update button to show saved state
-            event.target.innerHTML = '✓';
-            event.target.title = 'Saved!';
-            event.target.style.color = '#059669';
+            button.innerHTML = '✓';
+            button.title = 'Saved!';
+            button.style.color = '#059669';
             setTimeout(() => {
-                event.target.innerHTML = '📖';
-                event.target.title = 'Save word';
-                event.target.style.color = '';
+                button.innerHTML = `
+                  <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path d="M3 2.5C3 2.22386 3.22386 2 3.5 2H11.5C11.7761 2 12 2.22386 12 2.5V13.5C12 13.6818 11.9014 13.8492 11.7424 13.9373C11.5834 14.0254 11.3891 14.0203 11.235 13.924L7.5 11.5896L3.765 13.924C3.61087 14.0203 3.41659 14.0254 3.25762 13.9373C3.09864 13.8492 3 13.6818 3 13.5V2.5ZM4 3V12.5979L6.97 10.7416C7.29427 10.539 7.70573 10.539 8.03 10.7416L11 12.5979V3H4Z" fill="currentColor" fill-rule="evenodd" clip-rule="evenodd"></path>
+                  </svg>`;
+                button.title = 'Save word';
+                button.style.color = '';
             }, 2000);
             
         } catch (error) {
@@ -539,13 +566,16 @@ function saveWord(event) {
             });
             
             // Update button to show saved state
-            event.target.innerHTML = '✓';
-            event.target.title = 'Saved!';
-            event.target.style.color = '#059669';
+            button.innerHTML = '✓';
+            button.title = 'Saved!';
+            button.style.color = '#059669';
             setTimeout(() => {
-                event.target.innerHTML = '📖';
-                event.target.title = 'Save sentence';
-                event.target.style.color = '';
+                button.innerHTML = `
+                  <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path d="M3 2.5C3 2.22386 3.22386 2 3.5 2H11.5C11.7761 2 12 2.22386 12 2.5V13.5C12 13.6818 11.9014 13.8492 11.7424 13.9373C11.5834 14.0254 11.3891 14.0203 11.235 13.924L7.5 11.5896L3.765 13.924C3.61087 14.0203 3.41659 14.0254 3.25762 13.9373C3.09864 13.8492 3 13.6818 3 13.5V2.5ZM4 3V12.5979L6.97 10.7416C7.29427 10.539 7.70573 10.539 8.03 10.7416L11 12.5979V3H4Z" fill="currentColor" fill-rule="evenodd" clip-rule="evenodd"></path>
+                  </svg>`;
+                button.title = 'Save sentence';
+                button.style.color = '';
             }, 2000);
             
         } catch (error) {

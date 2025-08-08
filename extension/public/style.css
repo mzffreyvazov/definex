@@ -144,11 +144,13 @@
   cursor: pointer;
   padding: 0 5px;
   border-radius: 4px;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s, transform 0.2s;
+  color: #3b82f6;
 }
 
 #qdp-audio-btn:hover {
-  background-color: #f0f0f0;
+  background-color: #eff6ff;
+  transform: scale(1.1);
 }
 
 /* Save Button Styles */
@@ -176,12 +178,13 @@
   cursor: pointer;
   padding: 2px 5px;
   border-radius: 4px;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s, transform 0.2s;
   margin-left: 5px;
+  color: #3b82f6;
 }
 
 #qdp-tts-phrase-btn:hover, #qdp-tts-original-btn:hover {
-  background-color: #e8f4fd;
+  background-color: #eff6ff;
   transform: scale(1.1);
 }
 

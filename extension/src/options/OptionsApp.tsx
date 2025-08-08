@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import * as RadixSelect from '@radix-ui/react-select';
+import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons';
 import './options.css';
 
 type SavedWord = {
@@ -318,11 +320,44 @@ export function OptionsApp() {
                   <div style={{ padding: 24 }}>
                     <div className="form-group">
                       <label htmlFor="source">Choose your preferred dictionary:</label>
-                      <select id="source" value={preferredSource} onChange={e => setPreferredSource(e.target.value as any)}>
-                        <option value="cambridge">Cambridge Dictionary</option>
-                        <option value="merriam-webster">Merriam-Webster</option>
-                        <option value="gemini">Gemini AI</option>
-                      </select>
+                      <RadixSelect.Root value={preferredSource} onValueChange={v => setPreferredSource(v as any)}>
+                        <RadixSelect.Trigger id="source" className="SelectTrigger" aria-label="Dictionary Source">
+                          <RadixSelect.Value placeholder="Select a source" />
+                          <RadixSelect.Icon className="SelectIcon">
+                            <ChevronDownIcon />
+                          </RadixSelect.Icon>
+                        </RadixSelect.Trigger>
+                        <RadixSelect.Portal>
+                          <RadixSelect.Content className="SelectContent" position="popper" side="bottom" align="start" sideOffset={6} avoidCollisions={false}>
+                            <RadixSelect.ScrollUpButton className="SelectScrollButton">
+                              <ChevronUpIcon />
+                            </RadixSelect.ScrollUpButton>
+                            <RadixSelect.Viewport className="SelectViewport">
+                              <RadixSelect.Item className="SelectItem" value="cambridge">
+                                <RadixSelect.ItemText>Cambridge Dictionary</RadixSelect.ItemText>
+                                <RadixSelect.ItemIndicator className="SelectItemIndicator">
+                                  <CheckIcon />
+                                </RadixSelect.ItemIndicator>
+                              </RadixSelect.Item>
+                              <RadixSelect.Item className="SelectItem" value="merriam-webster">
+                                <RadixSelect.ItemText>Merriam-Webster</RadixSelect.ItemText>
+                                <RadixSelect.ItemIndicator className="SelectItemIndicator">
+                                  <CheckIcon />
+                                </RadixSelect.ItemIndicator>
+                              </RadixSelect.Item>
+                              <RadixSelect.Item className="SelectItem" value="gemini">
+                                <RadixSelect.ItemText>Gemini AI</RadixSelect.ItemText>
+                                <RadixSelect.ItemIndicator className="SelectItemIndicator">
+                                  <CheckIcon />
+                                </RadixSelect.ItemIndicator>
+                              </RadixSelect.Item>
+                            </RadixSelect.Viewport>
+                            <RadixSelect.ScrollDownButton className="SelectScrollButton">
+                              <ChevronDownIcon />
+                            </RadixSelect.ScrollDownButton>
+                          </RadixSelect.Content>
+                        </RadixSelect.Portal>
+                      </RadixSelect.Root>
                       <div id="source-description" style={{ fontSize: 13, color: '#64748b', marginTop: 8 }}>{sourceDescription}</div>
                     </div>
 
@@ -377,18 +412,47 @@ export function OptionsApp() {
                     <div style={{ padding: 24 }}>
                       <div className="form-group">
                         <label htmlFor="target-language">Translate to:</label>
-                        <select id="target-language" value={targetLanguage} onChange={e => setTargetLanguage(e.target.value)}>
-                          <option value="none">No Translation (Default)</option>
-                          <option value="Spanish">Spanish</option>
-                          <option value="French">French</option>
-                          <option value="German">German</option>
-                          <option value="Italian">Italian</option>
-                          <option value="Portuguese">Portuguese</option>
-                          <option value="Russian">Russian</option>
-                          <option value="Turkish">Turkish</option>
-                          <option value="Azerbaijani">Azerbaijani</option>
-                          <option value="Japanese">Japanese</option>
-                        </select>
+                        <RadixSelect.Root value={targetLanguage} onValueChange={v => setTargetLanguage(v)}>
+                          <RadixSelect.Trigger id="target-language" className="SelectTrigger" aria-label="Target language">
+                            <RadixSelect.Value placeholder="Select language" />
+                            <RadixSelect.Icon className="SelectIcon">
+                              <ChevronDownIcon />
+                            </RadixSelect.Icon>
+                          </RadixSelect.Trigger>
+                          <RadixSelect.Portal>
+                            <RadixSelect.Content className="SelectContent" position="popper" side="bottom" align="start" sideOffset={6} avoidCollisions={false}>
+                              <RadixSelect.ScrollUpButton className="SelectScrollButton">
+                                <ChevronUpIcon />
+                              </RadixSelect.ScrollUpButton>
+                              <RadixSelect.Viewport className="SelectViewport">
+                                {[
+                                  'none',
+                                  'Spanish',
+                                  'French',
+                                  'German',
+                                  'Italian',
+                                  'Portuguese',
+                                  'Russian',
+                                  'Turkish',
+                                  'Azerbaijani',
+                                  'Japanese',
+                                ].map(lang => (
+                                  <RadixSelect.Item key={lang} className="SelectItem" value={lang}>
+                                    <RadixSelect.ItemText>
+                                      {lang === 'none' ? 'No Translation (Default)' : lang}
+                                    </RadixSelect.ItemText>
+                                    <RadixSelect.ItemIndicator className="SelectItemIndicator">
+                                      <CheckIcon />
+                                    </RadixSelect.ItemIndicator>
+                                  </RadixSelect.Item>
+                                ))}
+                              </RadixSelect.Viewport>
+                              <RadixSelect.ScrollDownButton className="SelectScrollButton">
+                                <ChevronDownIcon />
+                              </RadixSelect.ScrollDownButton>
+                            </RadixSelect.Content>
+                          </RadixSelect.Portal>
+                        </RadixSelect.Root>
                       </div>
                     </div>
                   )}
@@ -401,16 +465,57 @@ export function OptionsApp() {
                   <div style={{ padding: 24 }}>
                     <div className="form-group">
                       <label htmlFor="definition-scope">Definition Scope:</label>
-                      <select id="definition-scope" value={definitionScope} onChange={e => setDefinitionScope(e.target.value as any)}>
-                        <option value="relevant">Show only the most relevant definition</option>
-                        <option value="all">Show definitions for all parts of speech</option>
-                      </select>
+                      <RadixSelect.Root value={definitionScope} onValueChange={v => setDefinitionScope(v as any)}>
+                        <RadixSelect.Trigger id="definition-scope" className="SelectTrigger" aria-label="Definition scope">
+                          <RadixSelect.Value placeholder="Select scope" />
+                          <RadixSelect.Icon className="SelectIcon">
+                            <ChevronDownIcon />
+                          </RadixSelect.Icon>
+                        </RadixSelect.Trigger>
+                        <RadixSelect.Portal>
+                          <RadixSelect.Content className="SelectContent" position="popper" side="bottom" align="start" sideOffset={6} avoidCollisions={false}>
+                            <RadixSelect.Viewport className="SelectViewport">
+                              <RadixSelect.Item className="SelectItem" value="relevant">
+                                <RadixSelect.ItemText>Show only the most relevant definition</RadixSelect.ItemText>
+                                <RadixSelect.ItemIndicator className="SelectItemIndicator">
+                                  <CheckIcon />
+                                </RadixSelect.ItemIndicator>
+                              </RadixSelect.Item>
+                              <RadixSelect.Item className="SelectItem" value="all">
+                                <RadixSelect.ItemText>Show definitions for all parts of speech</RadixSelect.ItemText>
+                                <RadixSelect.ItemIndicator className="SelectItemIndicator">
+                                  <CheckIcon />
+                                </RadixSelect.ItemIndicator>
+                              </RadixSelect.Item>
+                            </RadixSelect.Viewport>
+                          </RadixSelect.Content>
+                        </RadixSelect.Portal>
+                      </RadixSelect.Root>
                     </div>
                     <div className="form-group">
                       <label htmlFor="example-count">Number of Example Sentences (per definition):</label>
-                      <select id="example-count" value={exampleCount} onChange={e => setExampleCount(Number(e.target.value))}>
-                        {[0,1,2,3,4,5].map(n => <option key={n} value={n}>{n === 1 ? '1 (Default)' : n}</option>)}
-                      </select>
+                      <RadixSelect.Root value={String(exampleCount)} onValueChange={v => setExampleCount(Number(v))}>
+                        <RadixSelect.Trigger id="example-count" className="SelectTrigger" aria-label="Example count">
+                          <RadixSelect.Value placeholder="Select count" />
+                          <RadixSelect.Icon className="SelectIcon">
+                            <ChevronDownIcon />
+                          </RadixSelect.Icon>
+                        </RadixSelect.Trigger>
+                        <RadixSelect.Portal>
+                          <RadixSelect.Content className="SelectContent" position="popper" side="bottom" align="start" sideOffset={6} avoidCollisions={false}>
+                            <RadixSelect.Viewport className="SelectViewport">
+                              {[0,1,2,3,4,5].map(n => (
+                                <RadixSelect.Item key={n} className="SelectItem" value={String(n)}>
+                                  <RadixSelect.ItemText>{n === 1 ? '1 (Default)' : n}</RadixSelect.ItemText>
+                                  <RadixSelect.ItemIndicator className="SelectItemIndicator">
+                                    <CheckIcon />
+                                  </RadixSelect.ItemIndicator>
+                                </RadixSelect.Item>
+                              ))}
+                            </RadixSelect.Viewport>
+                          </RadixSelect.Content>
+                        </RadixSelect.Portal>
+                      </RadixSelect.Root>
                     </div>
                   </div>
                 </div>

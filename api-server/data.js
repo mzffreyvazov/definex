@@ -153,7 +153,19 @@ app.get("/api/cache/clear", (req, res) => {
 });
 
 app.get("/", (req, res) => {
-  res.sendFile(__dirname + "/index.html");
+  res.json({
+    name: "LexiLens API",
+    status: "ok",
+    endpoints: {
+      dictionary: "/api/dictionary/:language/:entry",
+      gemini: "/api/gemini/:entry?lang=LANG",
+      translate: "/api/translate/:sentence?lang=LANG",
+      tts: "/api/tts/:text",
+      ttsCustom: { method: "POST", path: "/api/tts" },
+      cacheStats: "/api/cache/stats",
+      cacheClear: "/api/cache/clear"
+    }
+  });
 });
 
 app.get("/api/dictionary/:language/:entry", async (req, res, next) => {

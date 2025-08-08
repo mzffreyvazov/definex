@@ -133,7 +133,8 @@ app.use(cors({
   origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : '*',
   credentials: true,
   methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'x-api-key', 'x-elevenlabs-api-key'],
+  // Added x-gemini-api-key so clients can supply their own Gemini key per request
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'x-api-key', 'x-elevenlabs-api-key', 'x-gemini-api-key'],
   exposedHeaders: ['X-Cache-Status', 'X-Response-Time', 'X-Rate-Limit-Remaining'],
   maxAge: 86400 // 24 hours preflight cache
 }));
@@ -417,15 +418,16 @@ app.get("/api/dictionary/:language/:entry", async (req, res, next) => {
 });
 // --- ADD THIS ENTIRE BLOCK TO data.js ---
 
-// Load environment variables from .env file
+// Load environment variables from .env file (keep optional GEMINI_API_KEY)
 require('dotenv').config();
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-// Make sure to handle the case where the API key is missing
-if (!process.env.GEMINI_API_KEY) {
-  throw new Error("GEMINI_API_KEY is not set in the .env file.");
+// Helper to obtain a Gemini client using a per-request key header or fallback env.
+function getGeminiClient(req) {
+  const key = req.headers['x-gemini-api-key'] || req.headers['x-api-key'] || process.env.GEMINI_API_KEY;
+  if (!key) return null;
+  return new GoogleGenerativeAI(key);
 }
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // Function to build the prompt for the AI
 function getGeminiPrompt(word, targetLanguage = null) {
@@ -509,14 +511,20 @@ function getGeminiPrompt(word, targetLanguage = null) {
 }
 
 app.get("/api/gemini/:entry", async (req, res) => {
+  let rawTextForErrorLog = null; // avoid referencing undefined in catch
   try {
+    const client = getGeminiClient(req);
+    if (!client) {
+      return res.status(400).json({ error: "Missing Gemini API key. Provide x-gemini-api-key header or set GEMINI_API_KEY on server." });
+    }
     const word = decodeURIComponent(req.params.entry);
-    const targetLanguage = req.query.lang || null; // Get target language from query parameter
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
+    const targetLanguage = req.query.lang || null; // optional target language
+    const model = client.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
     const prompt = getGeminiPrompt(word, targetLanguage);
 
     const result = await model.generateContent(prompt);
     let responseText = result.response.text();
+    rawTextForErrorLog = responseText;
 
     // --- FIX: Clean the AI's response before parsing ---
     // This regular expression finds a JSON object that might be wrapped in ```json ... ```
@@ -532,26 +540,28 @@ app.get("/api/gemini/:entry", async (req, res) => {
 
     res.status(200).json(jsonResponse);
   } catch (error) {
-    // Add more detail to the error log
-    console.error("Error processing Gemini API response:", error);
-    console.error("Original AI response text:", result.response.text()); // Log the problematic text
-    res.status(500).json({ error: "Failed to parse a valid JSON response from the AI." });
+    console.error("Error processing Gemini API response:", error.message);
+    if (rawTextForErrorLog) {
+      console.error("Original AI response text:", rawTextForErrorLog);
+    }
+    res.status(500).json({ error: "Failed to process AI response." });
   }
 });
 
 // New endpoint for sentence translation
 app.get("/api/translate/:sentence", async (req, res) => {
+  let rawTextForErrorLog = null;
   try {
-    const sentence = decodeURIComponent(req.params.sentence);
-    const targetLanguage = req.query.lang || 'Spanish'; // Default to Spanish if not specified
-    
-    if (!process.env.GEMINI_API_KEY) {
-      return res.status(500).json({ error: "GEMINI_API_KEY is not set in the .env file." });
+    const client = getGeminiClient(req);
+    if (!client) {
+      return res.status(400).json({ error: "Missing Gemini API key. Provide x-gemini-api-key header or set GEMINI_API_KEY on server." });
     }
-    
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
-    
-  const prompt = `
+    const sentence = decodeURIComponent(req.params.sentence);
+    const targetLanguage = req.query.lang || 'Spanish'; // default language
+
+    const model = client.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
+
+    const prompt = `
     You are a professional translator. Your task is to translate the following sentence to ${targetLanguage} and provide contextual information.
 
     You MUST respond with ONLY a valid JSON object. Do not include any introductory text, explanations, or markdown formatting like \`\`\`json.
@@ -579,6 +589,7 @@ app.get("/api/translate/:sentence", async (req, res) => {
     - If the sentence cannot be translated meaningfully, return: {"error": "Unable to translate sentence"}
   `;    const result = await model.generateContent(prompt);
     let responseText = result.response.text();
+    rawTextForErrorLog = responseText;
 
     // Clean the AI's response before parsing
     const jsonMatch = responseText.match(/```(json)?([\s\S]*?)```/);
@@ -590,7 +601,10 @@ app.get("/api/translate/:sentence", async (req, res) => {
     res.status(200).json(jsonResponse);
 
   } catch (error) {
-    console.error("Error processing sentence translation:", error);
+    console.error("Error processing sentence translation:", error.message);
+    if (rawTextForErrorLog) {
+      console.error("Original AI response text:", rawTextForErrorLog);
+    }
     res.status(500).json({ error: "Failed to translate sentence." });
   }
 });

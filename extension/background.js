@@ -126,7 +126,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
           const encodedWord = encodeURIComponent(word);
           const langParam = targetLanguage !== 'none' ? `?lang=${encodeURIComponent(targetLanguage)}` : '';
-          const geminiUrl = `http://localhost:3000/api/gemini/${encodedWord}${langParam}`;
+          const geminiUrl = `https://semantix.onrender.com/api/gemini/${encodedWord}${langParam}`;
           const fetchOpts = { headers: { 'x-api-key': geminiKey.trim() } }; // <--- pass key
 
           const words = word.split(/\s+/).filter(w => w);
@@ -137,7 +137,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
               .then(res => res.json())
               .then(normalizeGeminiData);
           } else {
-            const cambridgeUrl = `http://localhost:3000/api/dictionary/en/${encodedWord}`;
+            const cambridgeUrl = `https://semantix.onrender.com/api/dictionary/en/${encodedWord}`;
             apiPromise = Promise.all([
               fetch(geminiUrl, fetchOpts).then(res => res.json()),
               fetch(cambridgeUrl).then(res => res.json().catch(() => null))
@@ -164,7 +164,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             .then(res => res.json())
             .then(data => normalizeMwData(data));
         } else {
-          const apiUrl = `http://localhost:3000/api/dictionary/en/${word}`;
+          const apiUrl = `https://semantix.onrender.com/api/dictionary/en/${word}`;
           apiPromise = fetch(apiUrl).then(res => res.json());
         }
 
@@ -214,7 +214,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         console.log(`Translating sentence: "${sentence}"`);
         const encodedSentence = encodeURIComponent(sentence);
         const langParam = `?lang=${encodeURIComponent(targetLanguage)}`;
-        const translateUrl = `http://localhost:3000/api/translate/${encodedSentence}${langParam}`;
+        const translateUrl = `https://semantix.onrender.com/api/translate/${encodedSentence}${langParam}`;
 
         fetch(translateUrl)
           .then(res => res.json())

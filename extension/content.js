@@ -405,7 +405,7 @@ function playTTS(event) {
         
         // Create TTS audio URL
         const encodedText = encodeURIComponent(text);
-        const ttsUrl = `http://localhost:3000/api/tts/${encodedText}`;
+        const ttsUrl = `https://semantix.onrender.com/api/tts/${encodedText}`;
         
         // Prepare headers with ElevenLabs API key if available
         const headers = {};

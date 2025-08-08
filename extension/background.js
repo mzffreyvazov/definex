@@ -189,12 +189,19 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'translateSentence') {
     const sentence = message.text;
 
-    chrome.storage.local.get(['targetLanguage', 'ttsEnabled', 'elevenlabsApiKey'], (settings) => {
+    chrome.storage.local.get(['targetLanguage', 'ttsEnabled', 'elevenlabsApiKey', 'geminiApiKey'], (settings) => {
       const targetLanguage = settings.targetLanguage;
+      const geminiKey = settings.geminiApiKey;
       
       // Check if no target language is set
       if (!targetLanguage || targetLanguage === 'none') {
         sendResponse({ status: 'noLanguage', message: 'Please select a target language in options setting to proceed' });
+        return;
+      }
+      
+      // Ensure Gemini API key is available for translation endpoint
+      if (!geminiKey || !geminiKey.trim()) {
+        sendResponse({ status: 'error', message: 'Gemini API key is not set.' });
         return;
       }
       
@@ -216,7 +223,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         const langParam = `?lang=${encodeURIComponent(targetLanguage)}`;
         const translateUrl = `https://semantix.onrender.com/api/translate/${encodedSentence}${langParam}`;
 
-        fetch(translateUrl)
+        fetch(translateUrl, { headers: { 'x-api-key': geminiKey.trim() } })
           .then(res => res.json())
           .then(data => {
             if (data.error) {

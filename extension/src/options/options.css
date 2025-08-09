@@ -338,11 +338,11 @@ select:focus, input:focus, .SelectTrigger:focus {
 /* Column specific widths */
 .checkbox-col, .checkbox-cell { width: 50px; min-width: 50px; text-align: center; vertical-align: middle; }
 .text-col { width: 200px; min-width: 200px; }
-.type-col { width: 150px; min-width: 150px; }
+.type-col { width: 160px; min-width: 160px; }
 .pronunciation-col { width: 150px; min-width: 150px; }
-.pos-col { width: 150px; min-width: 150px; }
+.pos-col { width: 160px; min-width: 160px; }
 .definition-col { width: 400px; min-width: 400px; max-width: 400px; }
-.translation-col { width: 180px; min-width: 180px; }
+.translation-col { width: 200px; min-width: 200px; }
 .examples-col { width: 450px; min-width: 450px; max-width: 450px; }
 .date-col { width: 160px; min-width: 160px; }
 .actions-col, .actions-cell { width: 80px; min-width: 80px; text-align: center; vertical-align: middle; }

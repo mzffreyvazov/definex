@@ -572,7 +572,7 @@ app.get("/api/translate/:sentence", async (req, res) => {
       return res.status(400).json({ error: "Missing Gemini API key. Provide x-gemini-api-key header or set GEMINI_API_KEY on server." });
     }
     const sentence = decodeURIComponent(req.params.sentence);
-    const targetLanguage = req.query.lang || 'Spanish'; // default language
+    const targetLanguage = req.query.lang || 'Azerbaijani'; // default language
 
     const model = client.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
 

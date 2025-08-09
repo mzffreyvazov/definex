@@ -109,23 +109,26 @@ function FilterPanel({ column, values, selectedValues, onToggleFilter, onClearAl
         <h4>Filter {column === 'contentType' ? 'Content Type' : 'Part of Speech'}</h4>
         <button className="filter-close-btn" onClick={onClose}>×</button>
       </div>
-      <div className="filter-panel-body">
-        <button className="filter-clear-btn" onClick={onClearAll}>
-          Clear All
-        </button>
+      <div className="filter-panel-content">
         <div className="filter-options">
           {values.map(value => (
-            <label key={value} className="filter-option">
-              <input
-                type="checkbox"
-                checked={selectedValues.includes(value)}
-                onChange={() => onToggleFilter(value)}
-              />
-              <span className="filter-option-text">
+            <div key={value} className="filter-option">
+              <span className="filter-option-label">
                 {value.charAt(0).toUpperCase() + value.slice(1)}
               </span>
-            </label>
+              <div 
+                className={`toggle-switch ${selectedValues.includes(value) ? 'active' : ''}`}
+                onClick={() => onToggleFilter(value)}
+              >
+                <div className="toggle-slider"></div>
+              </div>
+            </div>
           ))}
+        </div>
+        <div className="filter-panel-footer">
+          <button className="filter-clear-btn" onClick={onClearAll}>
+            Clear All
+          </button>
         </div>
       </div>
     </div>

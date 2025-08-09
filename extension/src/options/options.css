@@ -219,8 +219,12 @@ select:focus, input:focus, .SelectTrigger:focus {
 }
 
 /* Saved Words Section */
+.search-and-actions {
+  padding: 16px 24px 4px 24px;
+  background-color: #f8fafc;
+}
+
 .search-box {
-  padding: 16px 24px;
   margin-bottom: 12px;
 }
 
@@ -230,23 +234,50 @@ select:focus, input:focus, .SelectTrigger:focus {
   margin: 0;
 }
 
-.filters-row {
-  display: flex;
-  gap: 16px;
-  padding: 0 24px 16px 24px;
-  border-bottom: 1px solid #e2e8f0;
+/* Action Toolbar */
+.action-toolbar {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #ffffff;
+  border: 1px solid #d1d5db;
+  color: #475569;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
-.filter-group {
+.action-toolbar-label {
+  font-weight: 500;
+  padding-right: 8px;
+  margin-right: 4px;
+  border-right: 1px solid #e2e8f0;
+}
+
+.action-toolbar-btn {
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 6px;
-  min-width: 220px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  font-weight: 500;
 }
 
-.filter-label {
-  font-size: 12px;
-  color: #64748b;
+.action-toolbar-btn:hover {
+  background-color: #f1f5f9;
+}
+
+.action-toolbar-btn.delete {
+  color: #ef4444;
+}
+.action-toolbar-btn.delete:hover {
+  background-color: #fee2e2;
 }
 
 .words-list {
@@ -262,7 +293,7 @@ select:focus, input:focus, .SelectTrigger:focus {
 
 .words-table {
   width: 100%;
-  min-width: 1380px; /* Updated from 1300px to account for increased column widths */
+  min-width: 1930px;
   border-collapse: separate;
   border-spacing: 0;
   font-size: 14px;
@@ -270,7 +301,7 @@ select:focus, input:focus, .SelectTrigger:focus {
 }
 
 .words-table th {
-  background-color: #ffffff;
+  background-color: #f8fafc;
   color: #8691a0;
   font-weight: 600;
   text-align: left;
@@ -296,15 +327,25 @@ select:focus, input:focus, .SelectTrigger:focus {
 .word-row { transition: background-color 0.2s ease; }
 .word-row:hover { background-color: #f8fafc !important; }
 
+.word-row.selected {
+  background-color: #eff6ff !important; /* use important to override hover */
+}
+.word-row.selected:hover {
+  background-color: #dbeafe !important;
+}
+
+
 /* Column specific widths */
+.checkbox-col, .checkbox-cell { width: 50px; min-width: 50px; text-align: center; vertical-align: middle; }
 .text-col { width: 200px; min-width: 200px; }
-.type-col { width: 180px; min-width: 180px; } /* Increased from 140px to 180px */
+.type-col { width: 150px; min-width: 150px; }
 .pronunciation-col { width: 150px; min-width: 150px; }
-.pos-col { width: 180px; min-width: 180px; } /* Increased from 140px to 180px */
-.definition-col { width: 490px; min-width: 490px; max-width: 490px; }
-.translation-col { width: 200px; min-width: 200px; }
-.examples-col { width: 560px; min-width: 560px; max-width: 560px; }
+.pos-col { width: 150px; min-width: 150px; }
+.definition-col { width: 400px; min-width: 400px; max-width: 400px; }
+.translation-col { width: 180px; min-width: 180px; }
+.examples-col { width: 450px; min-width: 450px; max-width: 450px; }
 .date-col { width: 120px; min-width: 120px; }
+.actions-col, .actions-cell { width: 80px; min-width: 80px; text-align: center; vertical-align: middle; }
 
 /* Cell content styling */
 .cell-content {
@@ -338,12 +379,41 @@ select:focus, input:focus, .SelectTrigger:focus {
 .pos-badge { font-size: 12px; color: #3b82f6; background: #eff6ff; padding: 4px 8px; border-radius: 4px; font-weight: 500; display: inline-block; }
 .pos-cell .cell-content { color: #059669; font-weight: 500; }
 
-.definition-cell .cell-content { line-height: 1.4; color: #64748b; white-space: normal; overflow: visible; text-overflow: initial; max-width: 560px; word-wrap: break-word; }
+.definition-cell .cell-content { line-height: 1.4; color: #64748b; white-space: normal; overflow: visible; text-overflow: initial; max-width: 100%; word-wrap: break-word; }
 .translation-cell .cell-content { color: #64748b; font-weight: 500; }
-.examples-cell .cell-content { color: #64748b; line-height: 1.4; white-space: normal; overflow: visible; text-overflow: initial; max-width: 560px; word-wrap: break-word; }
+.examples-cell .cell-content { color: #64748b; line-height: 1.4; white-space: normal; overflow: visible; text-overflow: initial; max-width: 100%; word-wrap: break-word; }
 .date-cell .cell-content { color: #94a3b8; font-size: 12px; }
 
-.word-actions { display: flex; gap: 8px; }
+.table-checkbox {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #3b82f6;
+}
+
+.actions-cell .action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: none;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #64748b;
+  transition: all 0.2s ease;
+}
+
+.actions-cell .action-btn:hover {
+  background-color: #f1f5f9;
+  color: #1e293b;
+}
+
+.actions-cell .action-btn.delete:hover {
+  background-color: #fee2e2;
+  color: #ef4444;
+}
 
 .btn { padding: 8px 16px; border: 1px solid #d1d5db; border-radius: 6px; background-color: white; color: #374151; font-size: 13px; cursor: pointer; transition: all 0.2s; }
 .btn:hover { background-color: #f9fafb; }
@@ -369,7 +439,6 @@ select:focus, input:focus, .SelectTrigger:focus {
 #status.show { opacity: 1; }
 
 /* Radix Select */
-/* Trigger should visually match inputs */
 .SelectTrigger {
   display: flex;
   align-items: center;
@@ -624,19 +693,7 @@ select:focus, input:focus, .SelectTrigger:focus {
 .words-table th {
   position: relative;
   padding: 0; /* Remove default padding to let column headers control spacing */
-}
-
-/* Adjust table header styling to accommodate new column headers */
-.words-table th {
-  background-color: #ffffff;
-  color: #8691a0;
-  font-weight: 600;
-  text-align: left;
-  padding: 0; /* Remove default padding */
-  border-bottom: 1px solid #e2e8f0;
-  position: sticky;
-  top: 0;
-  z-index: 10;
+  background-color: #f8fafc;
 }
 
 /* Add padding back through column headers */
@@ -644,10 +701,25 @@ select:focus, input:focus, .SelectTrigger:focus {
   padding: 12px 16px;
 }
 
-.words-table th .column-header.filterable {
-  padding: 8px 16px; /* Adjusted for the internal padding */
-  margin: 4px 0; /* Adjusted margins */
-  width: 100%;
-  min-width: 100%;
+/* Special handling for non-filterable headers */
+.actions-col {
+  padding: 12px 16px;
+}
+.actions-col .column-header {
+  justify-content: center;
 }
 
+/* Center select-all checkbox in the header cell */
+.words-table th.checkbox-col {
+  padding: 0;               /* remove padding that offsets centering */
+  position: relative;       /* establish positioning context */
+  text-align: center;
+  vertical-align: middle;
+}
+.words-table th.checkbox-col .table-checkbox {
+  position: absolute;       /* perfectly center the checkbox */
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+}

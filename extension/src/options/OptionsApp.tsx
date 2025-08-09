@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import * as RadixSelect from '@radix-ui/react-select';
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons';
 import './options.css';
@@ -15,6 +15,24 @@ type SavedWord = {
   audioUrl?: string;
   savedAt?: string | number;
 };
+
+// --- Helper Icons for Actions ---
+const TrashIcon = ({ size = 16, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <polyline points="3 6 5 6 21 6"></polyline>
+    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+  </svg>
+);
+
+const DownloadIcon = ({ size = 16, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+    <polyline points="7 10 12 15 17 10"></polyline>
+    <line x1="12" y1="15" x2="12" y2="3"></line>
+  </svg>
+);
+// --- End Helper Icons ---
+
 
 function maskApiKey(key: string): string {
   if (!key || key.length === 0) return '';
@@ -150,6 +168,10 @@ export function OptionsApp() {
 
   const [savedWords, setSavedWords] = useState<SavedWord[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // Row selection state
+  const [selectedWords, setSelectedWords] = useState<Set<string>>(new Set());
+  const savedWordsContainerRef = useRef<HTMLDivElement>(null);
 
   // New inline column filtering states
   const [activeColumnFilter, setActiveColumnFilter] = useState<string | null>(null);
@@ -190,6 +212,25 @@ export function OptionsApp() {
         setIsLoaded(true);
       }
     );
+  }, []);
+  
+  // Clear selection when filters or search term changes
+  useEffect(() => {
+      setSelectedWords(new Set());
+  }, [searchTerm, columnFilters]);
+
+  // Handle clicking outside the table to deselect all
+  useEffect(() => {
+      const handleClickOutside = (event: MouseEvent) => {
+          if (savedWordsContainerRef.current && !savedWordsContainerRef.current.contains(event.target as Node)) {
+              setSelectedWords(new Set());
+          }
+      };
+
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+          document.removeEventListener('mousedown', handleClickOutside);
+      };
   }, []);
 
   // Get unique values for inline column filtering
@@ -239,6 +280,26 @@ export function OptionsApp() {
     
     return list;
   }, [savedWords, searchTerm, columnFilters]);
+  
+  // Handle individual row selection
+  const toggleRowSelection = (id: string) => {
+      const newSelection = new Set(selectedWords);
+      if (newSelection.has(id)) {
+          newSelection.delete(id);
+      } else {
+          newSelection.add(id);
+      }
+      setSelectedWords(newSelection);
+  };
+
+  // Handle select all
+  const toggleSelectAll = () => {
+      if (selectedWords.size === filteredWords.length) {
+          setSelectedWords(new Set());
+      } else {
+          setSelectedWords(new Set(filteredWords.map(word => word.id)));
+      }
+  };
 
   function showStatus(text: string, type: 'success' | 'error' | 'warning' | 'info' = 'info') {
     setStatus({ text, type });
@@ -329,23 +390,49 @@ export function OptionsApp() {
   }
 
   function removeWord(wordId: string) {
-    chrome.storage.local.get(['savedWords'], res => {
-      const updated = (res.savedWords || []).filter((w: SavedWord) => w.id !== wordId);
-      chrome.storage.local.set({ savedWords: updated }, () => setSavedWords(updated));
-    });
+    if (window.confirm('Are you sure you want to delete this item?')) {
+        chrome.storage.local.get(['savedWords'], res => {
+            const updated = (res.savedWords || []).filter((w: SavedWord) => w.id !== wordId);
+            chrome.storage.local.set({ savedWords: updated }, () => {
+                setSavedWords(updated);
+                // Also remove from selection to keep state consistent
+                setSelectedWords(prev => {
+                    const newSelection = new Set(prev);
+                    newSelection.delete(wordId);
+                    return newSelection;
+                });
+                showStatus('Item deleted.', 'success');
+            });
+        });
+    }
   }
 
-  function exportAsCSV() {
-    chrome.storage.local.get(['savedWords'], result => {
-      const saved = result.savedWords || [];
-      if (saved.length === 0) return showStatus('No words to export', 'warning');
+  function deleteSelectedWords() {
+      if (window.confirm(`Are you sure you want to delete ${selectedWords.size} selected items?`)) {
+          chrome.storage.local.get(['savedWords'], res => {
+              const updatedWords = (res.savedWords || []).filter((w: SavedWord) => !selectedWords.has(w.id));
+              chrome.storage.local.set({ savedWords: updatedWords }, () => {
+                  setSavedWords(updatedWords);
+                  setSelectedWords(new Set());
+                  showStatus(`${selectedWords.size} items deleted.`, 'success');
+              });
+          });
+      }
+  }
+
+  function exportAsCSV(wordsToExport?: SavedWord[]) {
+    const processExport = (itemsToExport: SavedWord[]) => {
+      if (itemsToExport.length === 0) {
+        showStatus('No words selected to export', 'warning');
+        return;
+      }
       const header = 'Type,Text,Pronunciation,Part of Speech,Definition,Translation,Examples,Audio URL,Saved Date\n';
       const escapeCSV = (str: any) => {
         if (!str) return '""';
         const clean = String(str).replace(/"/g, '""');
         return `"${clean}"`;
       };
-      const rows = saved.map((item: SavedWord) => {
+      const rows = itemsToExport.map((item: SavedWord) => {
         const type = item.type || 'unknown';
         const text = item.text || '';
         const pronunciation = item.pronunciation || '';
@@ -393,8 +480,21 @@ export function OptionsApp() {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      showStatus(`Successfully exported ${saved.length} items to ${filename}`, 'success');
-    });
+      showStatus(`Successfully exported ${itemsToExport.length} items to ${filename}`, 'success');
+    }
+
+    if (wordsToExport) {
+      processExport(wordsToExport);
+    } else {
+      chrome.storage.local.get(['savedWords'], result => {
+        processExport(result.savedWords || []);
+      });
+    }
+  }
+
+  function exportSelectedCSV() {
+      const selectedData = savedWords.filter(word => selectedWords.has(word.id));
+      exportAsCSV(selectedData);
   }
 
   function exportAsJSON() {
@@ -587,7 +687,7 @@ export function OptionsApp() {
                             onChange={e => setMwApiKey(e.target.value)}
                           />
                           <div style={{ fontSize: 13, color: '#64748b', marginTop: 8 }}>
-                            Get your free API key from <a href="https://dictionaryapi.com/" target="_blank" style={{ color: '#3b82f6' }}>dictionaryapi.com</a>.
+                            Get your free API key from <a href="https://dictionaryapi.com/" target="_blank" rel="noreferrer" style={{ color: '#3b82f6' }}>dictionaryapi.com</a>.
                           </div>
                         </div>
                       </div>
@@ -760,7 +860,7 @@ export function OptionsApp() {
                             onChange={e => setElevenlabsApiKey(e.target.value)}
                           />
                           <div style={{ fontSize: 13, color: '#64748b', marginTop: 8 }}>
-                            Get your API key from <a href="https://elevenlabs.io/" target="_blank" style={{ color: '#3b82f6' }}>elevenlabs.io</a> to enable high-quality text-to-speech.
+                            Get your API key from <a href="https://elevenlabs.io/" target="_blank" rel="noreferrer" style={{ color: '#3b82f6' }}>elevenlabs.io</a> to enable high-quality text-to-speech.
                           </div>
                         </div>
                       </div>
@@ -782,7 +882,7 @@ export function OptionsApp() {
               <p>View and manage your saved words and definitions</p>
             </div>
             <div className="content-body">
-              <div className="words-container">
+              <div className="words-container" ref={savedWordsContainerRef}>
                 <div className="words-header">
                   <h3>Your Vocabulary</h3>
                   <span className="words-count">
@@ -791,9 +891,27 @@ export function OptionsApp() {
                       : `${savedWords.length} words saved`}
                   </span>
                 </div>
-                <div className="search-box">
-                  <input type="text" className="search-input" placeholder="Search saved words..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+                <div className="search-and-actions">
+                  <div className="search-box">
+                    <input type="text" className="search-input" placeholder="Search saved words..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+                  </div>
+                  {selectedWords.size > 0 && (
+                    <div className="action-toolbar">
+                        <span className="action-toolbar-label">
+                            {selectedWords.size} selected
+                        </span>
+                        <button onClick={exportSelectedCSV} className="action-toolbar-btn" title="Export Selected">
+                            <DownloadIcon size={14} />
+                            Export
+                        </button>
+                        <button onClick={deleteSelectedWords} className="action-toolbar-btn delete" title="Delete Selected">
+                            <TrashIcon size={14} />
+                            Delete
+                        </button>
+                    </div>
+                  )}
                 </div>
+
                 <div className="words-list">
                   {filteredWords.length === 0 ? (
                     <div className="empty-state">
@@ -808,6 +926,15 @@ export function OptionsApp() {
                       <table className="words-table">
                         <thead>
                           <tr>
+                            <th className="checkbox-col">
+                              <input
+                                  type="checkbox"
+                                  className="table-checkbox"
+                                  checked={filteredWords.length > 0 && selectedWords.size === filteredWords.length}
+                                  onChange={toggleSelectAll}
+                                  aria-label="Select all rows"
+                              />
+                            </th>
                             <th className="text-col">
                               <ColumnHeader title="Text" />
                             </th>
@@ -844,6 +971,9 @@ export function OptionsApp() {
                             <th className="date-col">
                               <ColumnHeader title="Date Added" />
                             </th>
+                            {/* <th className="actions-col">
+                               <ColumnHeader title="Actions" />
+                            </th> */}
                           </tr>
                         </thead>
                         <tbody>
@@ -863,7 +993,16 @@ export function OptionsApp() {
                               examplesText = examplesText ? examplesText + '<br>' + keyPhrasesText : keyPhrasesText;
                             }
                             return (
-                              <tr className="word-row" data-type={item.type} data-id={item.id} key={item.id}>
+                              <tr className={`word-row ${selectedWords.has(item.id) ? 'selected' : ''}`} data-id={item.id} key={item.id}>
+                                <td className="checkbox-cell">
+                                    <input
+                                        type="checkbox"
+                                        className="table-checkbox"
+                                        checked={selectedWords.has(item.id)}
+                                        onChange={() => toggleRowSelection(item.id)}
+                                        aria-label={`Select row for ${item.text}`}
+                                    />
+                                </td>
                                 <td className="text-cell"><div className="cell-content"><span className="word-text">{item.text}</span></div></td>
                                 <td className="type-cell"><div className="cell-content"><span className="type-badge">{item.type}</span></div></td>
                                 <td className="pronunciation-cell"><div className="cell-content">{item.pronunciation || '-'}</div></td>
@@ -872,6 +1011,11 @@ export function OptionsApp() {
                                 <td className="translation-cell"><div className="cell-content" title={item.translation || ''}>{item.translation || '-'}</div></td>
                                 <td className="examples-cell"><div className="cell-content" title={examplesText} dangerouslySetInnerHTML={{ __html: examplesText || '-' }} /></td>
                                 <td className="date-cell"><div className="cell-content">{item.savedAt ? new Date(item.savedAt).toLocaleDateString() : '-'}</div></td>
+                                {/* <td className="actions-cell">
+                                    <button onClick={() => removeWord(item.id)} className="action-btn delete" title="Delete item">
+                                        <TrashIcon />
+                                    </button>
+                                </td> */}
                               </tr>
                             );
                           })}
@@ -880,7 +1024,6 @@ export function OptionsApp() {
                     </div>
                   )}
                   
-                  {/* Filter Panels - rendered outside table for proper overlay positioning */}
                   {activeColumnFilter === 'contentType' && (
                     <FilterPanel
                       column="contentType"
@@ -924,7 +1067,7 @@ export function OptionsApp() {
                   </svg>
                   <h3>Export as CSV</h3>
                   <p>Download your saved words as a CSV file for use in spreadsheet applications</p>
-                  <button className="btn btn-primary" onClick={exportAsCSV}>Export CSV</button>
+                  <button className="btn btn-primary" onClick={() => exportAsCSV()}>Export CSV</button>
                 </div>
                 <div className="export-card">
                   <svg className="export-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -995,4 +1138,3 @@ export function OptionsApp() {
     </div>
   );
 }
-

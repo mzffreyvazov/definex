@@ -139,41 +139,51 @@ function handleSelection(event) {
     mouseY = rect.bottom;
   }
   
-  // Check if selection is valid based on the source
+  // Check if selection is valid and decide whether to translate or define
   chrome.storage.local.get(['preferredSource'], (settings) => {
     const source = settings.preferredSource || 'cambridge';
-    
-    let isValidSelection = false;
+
+    // Tokenize and classify selection
     const words = selectedText.split(/\s+/).filter(word => word.length > 0);
-    const isSentence = words.length > 5; // More than 5 words = sentence
-    
-    if (isSentence) {
-      // For sentences: allow any text with basic validation
-      isValidSelection = selectedText.length > 0 && selectedText.length <= 500; // Reasonable length limit
-    } else if (source === 'gemini') {
-      // For Gemini: allow phrases up to 5 words (letters, spaces, hyphens, apostrophes)
-      isValidSelection = words.length >= 1 && words.length <= 5 && 
-                       /^[a-zA-Z\s'-]+$/.test(selectedText);
+    const wordCount = words.length;
+    const isPhrase = wordCount >= 2 && wordCount <= 5;
+    const isLongSentence = wordCount > 5;
+
+    // Validation regexes (Unicode-aware)
+    const SINGLE_WORD_REGEX = /^[\p{L}\p{M}][\p{L}\p{M}'’\-]*$/u;
+    const PHRASE_REGEX = /^[\p{L}\p{M}\s'’\-.,!?()"“”‘’:;]+$/u;
+
+    let isValidSelection = false;
+    if (isLongSentence) {
+      // Allow longer selections with a reasonable length cap
+      isValidSelection = selectedText.length > 0 && selectedText.length <= 500;
+    } else if (isPhrase) {
+      // Allow 2–5 word phrases broadly; background decides which API to use
+      // Keep a generous length cap to avoid huge selections
+      isValidSelection = selectedText.length > 0 && selectedText.length <= 300;
     } else {
-      // For other sources: only single words
-      isValidSelection = selectedText.length > 0 && /^[a-zA-Z]+$/.test(selectedText);
+      // Single word: allow Unicode letters plus apostrophes/hyphens
+      isValidSelection = SINGLE_WORD_REGEX.test(selectedText);
     }
-    
+
     if (!isValidSelection) {
       return; // Don't show popup for invalid selections
     }
-    
+
     // Remove existing popup if it exists
     clearPopupData();
-    
+
+    // Only treat long sentences as sentence-like; phrases use definition flow
+    const isSentenceLike = isLongSentence;
+
     // Create a skeleton placeholder popup while fetching
-    const skeleton = buildSkeletonPlaceholder(isSentence);
-    createPopup(mouseX, mouseY, skeleton, isSentence);
+    const skeleton = buildSkeletonPlaceholder(isSentenceLike);
+    createPopup(mouseX, mouseY, skeleton, isSentenceLike);
     const skeletonShownAt = performance.now();
-    
+
     // Send the selected text to the background script
-    const messageType = isSentence ? 'translateSentence' : 'getDefinition';
-    const messageData = isSentence 
+    const messageType = isSentenceLike ? 'translateSentence' : 'getDefinition';
+    const messageData = isSentenceLike
       ? { type: messageType, text: selectedText }
       : { type: messageType, word: selectedText };
       
@@ -188,7 +198,7 @@ function handleSelection(event) {
           const ttsEnabled = response.ttsEnabled || false;
           const elevenlabsApiKey = response.elevenlabsApiKey || '';
           window.elevenlabsApiKey = elevenlabsApiKey;
-          const content = isSentence ? formatTranslationData(response.data, ttsEnabled) : formatData(response.data, ttsEnabled);
+          const content = isSentenceLike ? formatTranslationData(response.data, ttsEnabled) : formatData(response.data, ttsEnabled);
           updatePopupContent(content);
         } else if (response.status === 'noLanguage') {
           updatePopupContent(`<div style="padding: 20px; text-align: center; font-family: 'Open Sans', sans-serif; line-height: 1.5;">

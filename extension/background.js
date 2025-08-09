@@ -117,7 +117,20 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
         let apiPromise;
 
-        if (source === 'gemini') {
+        // Determine if this is a phrase (2–5 words) to optionally override source
+        const words = word.split(/\s+/).filter(w => w);
+        const isPhrase = words.length >= 2 && words.length <= 5;
+
+        // Phrase fallback: use Gemini definition endpoint when available, regardless of preferred source
+        if (isPhrase && geminiKey && geminiKey.trim() && source !== 'gemini') {
+          const encodedWord = encodeURIComponent(word);
+          const langParam = targetLanguage !== 'none' ? `?lang=${encodeURIComponent(targetLanguage)}` : '';
+          const geminiUrl = `https://semantix.onrender.com/api/gemini/${encodedWord}${langParam}`;
+          const fetchOpts = { headers: { 'x-api-key': geminiKey.trim() } };
+          apiPromise = fetch(geminiUrl, fetchOpts)
+            .then(res => res.json())
+            .then(normalizeGeminiData);
+        } else if (source === 'gemini') {
           // --- REQUIRE geminiApiKey ---
           if (!geminiKey || !geminiKey.trim()) {
             sendResponse({ status: 'error', message: 'Gemini API key is not set.' });

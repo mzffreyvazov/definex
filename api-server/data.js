@@ -515,7 +515,10 @@ function getGeminiPrompt(word, targetLanguage = null) {
        - Provide clear definitions that explain the meaning of the phrase as a whole
        - Include pronunciation if commonly used as a unit
        - For each definition, provide exactly 5 distinct example sentences showing the phrase in context` :
-      `- Provide all common parts of speech for the word
+      `- For words, use ONLY single-word parts of speech: noun, pronoun, verb, adjective, adverb, preposition, conjunction, or interjection
+       - Do NOT use compound descriptions like "verb (present participle)" or "adjective (comparative)"
+       - Use only the base part of speech category
+       - Provide all common parts of speech for the word
        - For each part of speech, provide at least one common definition
        - For each definition, provide exactly 5 distinct example sentences`}
     - If the ${inputType} is nonsensical or cannot be defined, return this exact JSON object: {"error": "${inputType.charAt(0).toUpperCase() + inputType.slice(1)} not found"}

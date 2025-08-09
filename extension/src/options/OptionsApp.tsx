@@ -82,6 +82,7 @@ interface FilterPanelProps {
 
 function FilterPanel({ column, values, selectedValues, onToggleFilter, onClearAll, onClose, triggerElement }: FilterPanelProps) {
   const [position, setPosition] = React.useState({ top: 0, left: 0 });
+  const [isPositioned, setIsPositioned] = React.useState(false);
 
   React.useEffect(() => {
     if (triggerElement) {
@@ -90,6 +91,7 @@ function FilterPanel({ column, values, selectedValues, onToggleFilter, onClearAl
         top: rect.bottom + 4,
         left: rect.left
       });
+      setIsPositioned(true);
     }
   }, [triggerElement]);
 
@@ -98,7 +100,9 @@ function FilterPanel({ column, values, selectedValues, onToggleFilter, onClearAl
       className="filter-panel"
       style={{
         top: `${position.top}px`,
-        left: `${position.left}px`
+        left: `${position.left}px`,
+        opacity: isPositioned ? 1 : 0,
+        visibility: isPositioned ? 'visible' : 'hidden'
       }}
     >
       <div className="filter-panel-header">

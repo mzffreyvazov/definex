@@ -488,6 +488,7 @@ select:focus, input:focus, .SelectTrigger:focus {
   min-width: 200px;
   max-width: 300px;
   margin-top: 4px;
+  transition: opacity 0.15s ease-in-out;
 }
 
 .filter-panel-header {

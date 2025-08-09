@@ -188,8 +188,8 @@ function handleSelection(event) {
       : { type: messageType, word: selectedText };
       
     chrome.runtime.sendMessage(messageData, (response) => {
-      const MIN_SKELETON_MS = 400;
-      const showAfter = () => {
+    // Render immediately when response arrives; do not enforce minimum skeleton time
+    const showAfter = () => {
         if (chrome.runtime.lastError) {
           updatePopupContent('Error: Could not connect to the extension.');
           return;
@@ -206,16 +206,12 @@ function handleSelection(event) {
             <div style="font-size: 14px; color: #666;">${response.message}</div>
           </div>`);
         } else {
-          updatePopupContent(`Error: ${response.message || (isSentence ? 'Translation failed.' : 'Definition not found.')}`);
+      // Use correct flag for sentence mode
+      updatePopupContent(`Error: ${response.message || (isSentenceLike ? 'Translation failed.' : 'Definition not found.')}`);
         }
       };
-      const elapsed = performance.now() - skeletonShownAt;
-      const delay = Math.max(0, MIN_SKELETON_MS - elapsed);
-      if (delay > 0) {
-        setTimeout(showAfter, delay);
-      } else {
-        showAfter();
-      }
+    // Show results as soon as they're ready (no extra delay)
+    showAfter();
     });
   });
 }

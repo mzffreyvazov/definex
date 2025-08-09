@@ -291,4 +291,23 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     
     return true;
   }
+
+  if (message.type === 'unsaveWord') {
+    const { text, type } = message.data || {};
+    if (!text || !type) {
+      sendResponse?.({ status: 'error', message: 'Invalid unsave payload.' });
+      return true;
+    }
+    chrome.storage.local.get(['savedWords'], (result) => {
+      const savedWords = result.savedWords || [];
+      const newList = savedWords.filter(
+        (w) => !(w.text?.toLowerCase() === text.toLowerCase() && w.type === type)
+      );
+      chrome.storage.local.set({ savedWords: newList }, () => {
+        console.log('Word unsaved successfully:', text);
+        sendResponse?.({ status: 'success' });
+      });
+    });
+    return true;
+  }
 });

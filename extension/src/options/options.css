@@ -421,6 +421,7 @@ select:focus, input:focus, .SelectTrigger:focus {
   align-items: center;
   justify-content: space-between;
   width: 100%;
+  min-width: 100%;
   position: relative;
 }
 
@@ -430,6 +431,8 @@ select:focus, input:focus, .SelectTrigger:focus {
   margin: -4px -8px;
   border-radius: 6px;
   transition: background-color 0.2s ease;
+  width: calc(100% + 16px);
+  min-width: calc(100% + 16px);
 }
 
 .column-header.filterable:hover {
@@ -620,6 +623,7 @@ select:focus, input:focus, .SelectTrigger:focus {
 /* Ensure table headers have relative positioning for absolute positioned filter panels */
 .words-table th {
   position: relative;
+  padding: 0; /* Remove default padding to let column headers control spacing */
 }
 
 /* Adjust table header styling to accommodate new column headers */
@@ -628,10 +632,22 @@ select:focus, input:focus, .SelectTrigger:focus {
   color: #8691a0;
   font-weight: 600;
   text-align: left;
-  padding: 12px 16px;
+  padding: 0; /* Remove default padding */
   border-bottom: 1px solid #e2e8f0;
   position: sticky;
   top: 0;
   z-index: 10;
+}
+
+/* Add padding back through column headers */
+.words-table th .column-header {
+  padding: 12px 16px;
+}
+
+.words-table th .column-header.filterable {
+  padding: 8px 16px; /* Adjusted for the internal padding */
+  margin: 4px 0; /* Adjusted margins */
+  width: 100%;
+  min-width: 100%;
 }
 

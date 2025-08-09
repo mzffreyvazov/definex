@@ -1,4 +1,4 @@
-# Semantix
+# DefineX - Define Anything 
 
 ## New Features
 - **Phrase Support**: When using Gemini AI source, you can now select and get definitions for phrases up to 5 words long  
@@ -19,9 +19,18 @@ npm install
 1. Get your Gemini API key from [Google AI Studio](https://aistudio.google.com/app/apikey)  
 2. Get your ElevenLabs API key from [ElevenLabs](https://elevenlabs.io/speech-synthesis) (required for Text-to-Speech)
 3. Copy `.env.example` to `.env`:
-   ```bash
-   cp .env.example .env
-   ```
+    - On Windows (cmd):
+       ```cmd
+       copy .env.example .env
+       ```
+       On PowerShell:
+       ```powershell
+       Copy-Item .env.example .env
+       ```
+       On macOS/Linux:
+       ```bash
+       cp .env.example .env
+       ```
 4. Edit `.env` file and set the following environment variables:
    ```
    GEMINI_API_KEY="your_actual_gemini_api_key"
@@ -37,14 +46,20 @@ The server will run on `http://localhost:3000`
 ### 4. Load the Extension
 1. Open Chrome and go to `chrome://extensions/`  
 2. Enable **Developer mode**  
-3. Click **Load unpacked** and select the `extension` folder (the Semantix extension)
+3. Click **Load unpacked** and select the DefineX extension folder:
+   - If you build with Vite, select `extension/dist`
+   - Otherwise, select the `extension` folder
 
 ### 5. Configure Extension
-1. Click the Semantix icon or go to extension options  
+1. Click the DefineX icon or go to extension options  
 2. Select **Gemini AI** as your preferred source for phrase support  
 3. Configure other settings as needed  
 
 ## Usage
+
+### Per-site Control (Popup)
+- Open the popup on any site and use the toggle to enable/disable DefineX just for that site
+- The status shows whether the current site is enabled
 
 ### Single Words (All Sources)
 - Double-click any single word to get its definition  
@@ -86,6 +101,16 @@ The server will run on `http://localhost:3000`
 
 *Audio from Cambridge Dictionary when available
 
+## Latest Additions
+
+- Per-site enable/disable from the popup
+- Saved Words manager in Options: search, multi-select, delete one or many, click-blank to deselect
+- Inline column filters: Content Type, Part of Speech, Date Added (Today, Last 7, Last 30)
+- Export Saved Words: CSV and JSON
+- Export Settings (excludes API keys): JSON with metadata
+- API keys masking in Options (keys are obscured after save)
+- TTS toggle in Options (requires ElevenLabs API key)
+
 ## Troubleshooting
 
 ### "Definition not found" errors
@@ -104,6 +129,6 @@ The server will run on `http://localhost:3000`
 - Try selecting the text more precisely
 
 ### Extension not responding
-- Check that the Semantix extension is properly loaded in `chrome://extensions/`  
+- Check that the DefineX extension is properly loaded in `chrome://extensions/`  
 - Make sure the API server is running on `http://localhost:3000`  
-- Try reloading the
+- Try reloading the extension and the page

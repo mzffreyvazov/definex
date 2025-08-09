@@ -48,7 +48,7 @@ export function PopupApp() {
   return (
     <div className="popup-container">
       <div className="popup-header">
-        <h1>Semantix</h1>
+        <h1>DefineX</h1>
         <p className="subtitle">Dictionary & Translation</p>
       </div>
       <div className="popup-content">

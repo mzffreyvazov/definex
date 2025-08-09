@@ -1,7 +1,7 @@
 {
-  "name": "lexilens-extension",
+  "name": "definex-extension",
   "version": "1.0.0",
-  "description": "LexiLens browser extension build (React + Vite)",
+  "description": "Definex browser extension build (React + Vite)",
   "main": "background.js",
   "scripts": {
     "dev": "vite",

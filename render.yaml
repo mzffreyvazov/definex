@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: semantix-api
+    name: definex-api
     rootDir: api-server
     runtime: node
     plan: free

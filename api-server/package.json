@@ -2,7 +2,7 @@
   "name": "api-server",
   "version": "1.0.0",
   "private": true,
-  "description": "Semantix API server",
+  "description": "DefineX API server",
   "main": "server.js",
   "type": "commonjs",
   "engines": {

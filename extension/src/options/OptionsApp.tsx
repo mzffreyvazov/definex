@@ -539,7 +539,7 @@ export function OptionsApp() {
       });
       const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + header + rows.join('\n');
       const timestamp = new Date().toISOString().split('T')[0];
-      const filename = `semantix_words_${timestamp}.csv`;
+      const filename = `definex_words_${timestamp}.csv`;
       const encodedUri = encodeURI(csvContent);
       const link = document.createElement('a');
       link.setAttribute('href', encodedUri);
@@ -569,7 +569,7 @@ export function OptionsApp() {
       const saved = result.savedWords || [];
       if (saved.length === 0) return showStatus('No words to export', 'warning');
       const timestamp = new Date().toISOString().split('T')[0];
-      const filename = `semantix_words_${timestamp}.json`;
+      const filename = `definex_words_${timestamp}.json`;
       const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(saved, null, 2));
       const link = document.createElement('a');
       link.setAttribute('href', dataStr);
@@ -593,10 +593,10 @@ export function OptionsApp() {
       (settingsToExport as any)._exportInfo = {
         exportedAt: new Date().toISOString(),
         version: '1.0',
-        extension: 'Semantix'
+        extension: 'DefineX'
       };
       const timestamp = new Date().toISOString().split('T')[0];
-      const filename = `semantix_settings_${timestamp}.json`;
+      const filename = `definex_settings_${timestamp}.json`;
       const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(settingsToExport, null, 2));
       const link = document.createElement('a');
       link.setAttribute('href', dataStr);
@@ -645,8 +645,8 @@ export function OptionsApp() {
       <div className="sidebar">
         <div className="sidebar-header">
           <div className="brand-container">
-            <img src={logoSrc} alt="Semantix Logo" className="brand-logo" />
-            <h1>Semantix</h1>
+            <img src={logoSrc} alt="DefineX Logo" className="brand-logo" />
+            <h1>DefineX</h1>
           </div>
         </div>
         <nav className="sidebar-nav">
@@ -1199,12 +1199,12 @@ export function OptionsApp() {
           <div className="content-section active" id="about">
             <div className="content-header">
               <h2>About</h2>
-              <p>Information about Semantix Chrome Extension</p>
+              <p>Information about DefineX Chrome Extension</p>
             </div>
             <div className="content-body">
               <div className="words-container">
                 <div className="words-header">
-                  <h3>Semantix Dictionary Extension</h3>
+                  <h3>DefineX Dictionary Extension</h3>
                 </div>
                 <div style={{ padding: 24 }}>
                   <p><strong>Version:</strong> 1.0.0</p>

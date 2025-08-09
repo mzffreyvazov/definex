@@ -344,7 +344,7 @@ select:focus, input:focus, .SelectTrigger:focus {
 .definition-col { width: 400px; min-width: 400px; max-width: 400px; }
 .translation-col { width: 180px; min-width: 180px; }
 .examples-col { width: 450px; min-width: 450px; max-width: 450px; }
-.date-col { width: 120px; min-width: 120px; }
+.date-col { width: 160px; min-width: 160px; }
 .actions-col, .actions-cell { width: 80px; min-width: 80px; text-align: center; vertical-align: middle; }
 
 /* Cell content styling */
@@ -382,7 +382,7 @@ select:focus, input:focus, .SelectTrigger:focus {
 .definition-cell .cell-content { line-height: 1.4; color: #64748b; white-space: normal; overflow: visible; text-overflow: initial; max-width: 100%; word-wrap: break-word; }
 .translation-cell .cell-content { color: #64748b; font-weight: 500; }
 .examples-cell .cell-content { color: #64748b; line-height: 1.4; white-space: normal; overflow: visible; text-overflow: initial; max-width: 100%; word-wrap: break-word; }
-.date-cell .cell-content { color: #94a3b8; font-size: 12px; }
+.date-cell .cell-content { color: #94a3b8; font-size: 12px; text-align: right; }
 
 .table-checkbox {
   width: 16px;

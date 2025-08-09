@@ -3,6 +3,9 @@ import * as RadixSelect from '@radix-ui/react-select';
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons';
 import './options.css';
 
+// Ensure the logo image is bundled by Vite/CRX
+import logoUrl from '../../icons/logo.png?url';
+
 type SavedWord = {
   id: string;
   type: 'word' | 'phrase' | 'sentence' | string;
@@ -89,7 +92,7 @@ function ColumnHeader({ title, isFilterable = false, isActive = false, hasActive
 
 // Filter Panel Component
 interface FilterPanelProps {
-  column: 'contentType' | 'partOfSpeech';
+  column: 'contentType' | 'partOfSpeech' | 'dateAdded';
   values: string[];
   selectedValues: string[];
   onToggleFilter: (value: string) => void;
@@ -101,20 +104,47 @@ interface FilterPanelProps {
 function FilterPanel({ column, values, selectedValues, onToggleFilter, onClearAll, onClose, triggerElement }: FilterPanelProps) {
   const [position, setPosition] = React.useState({ top: 0, left: 0 });
   const [isPositioned, setIsPositioned] = React.useState(false);
+  const panelRef = React.useRef<HTMLDivElement | null>(null);
 
   React.useEffect(() => {
     if (triggerElement) {
       const rect = triggerElement.getBoundingClientRect();
-      setPosition({
-        top: rect.bottom + 4,
-        left: rect.left
-      });
+      // Initial desired position (below, left-aligned)
+      let desiredTop = rect.bottom + 4;
+      let desiredLeft = rect.left;
+
+      // Temporarily place panel offscreen to measure
+      setPosition({ top: -9999, left: -9999 });
       setIsPositioned(true);
+
+      // Defer to next paint to ensure ref has size
+      requestAnimationFrame(() => {
+        const panel = panelRef.current;
+        const panelWidth = panel?.offsetWidth ?? 280; // fallback
+        const panelHeight = panel?.offsetHeight ?? 220; // fallback
+
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+
+        // Flip above if panel would overflow bottom
+        if (desiredTop + panelHeight > vh - 8) {
+          desiredTop = Math.max(8, rect.top - panelHeight - 4);
+        }
+
+        // Clamp horizontally within viewport with 8px margin
+        if (desiredLeft + panelWidth > vw - 8) {
+          desiredLeft = Math.max(8, vw - panelWidth - 8);
+        }
+        if (desiredLeft < 8) desiredLeft = 8;
+
+        setPosition({ top: desiredTop, left: desiredLeft });
+      });
     }
   }, [triggerElement]);
 
   return (
     <div 
+      ref={panelRef}
       className="filter-panel"
       style={{
         top: `${position.top}px`,
@@ -124,7 +154,7 @@ function FilterPanel({ column, values, selectedValues, onToggleFilter, onClearAl
       }}
     >
       <div className="filter-panel-header">
-        <h4>Filter {column === 'contentType' ? 'Content Type' : 'Part of Speech'}</h4>
+        <h4>Filter {column === 'contentType' ? 'Content Type' : column === 'partOfSpeech' ? 'Part of Speech' : 'Date Added'}</h4>
         <button className="filter-close-btn" onClick={onClose}>×</button>
       </div>
       <div className="filter-panel-content">
@@ -132,7 +162,14 @@ function FilterPanel({ column, values, selectedValues, onToggleFilter, onClearAl
           {values.map(value => (
             <div key={value} className="filter-option">
               <span className="filter-option-label">
-                {value.charAt(0).toUpperCase() + value.slice(1)}
+                {(() => {
+                  if (column === 'dateAdded') {
+                    if (value === 'today') return 'Today';
+                    if (value === 'last7') return 'Last 7 Day';
+                    if (value === 'last30') return 'Last 30 day';
+                  }
+                  return value.charAt(0).toUpperCase() + value.slice(1);
+                })()}
               </span>
               <div 
                 className={`toggle-switch ${selectedValues.includes(value) ? 'active' : ''}`}
@@ -179,9 +216,11 @@ export function OptionsApp() {
   const [columnFilters, setColumnFilters] = useState<{
     contentType: string[];
     partOfSpeech: string[];
+    dateAdded: string[]; // single-select enforced
   }>({
     contentType: [],
-    partOfSpeech: []
+    partOfSpeech: [],
+    dateAdded: []
   });
 
   const [status, setStatus] = useState<{ text: string; type: 'success' | 'error' | 'warning' | 'info' } | null>(null);
@@ -271,6 +310,28 @@ export function OptionsApp() {
         return columnFilters.partOfSpeech.includes(wordPos);
       });
     }
+
+    // Apply Date Added single-select filter
+    if (columnFilters.dateAdded.length > 0) {
+      const option = columnFilters.dateAdded[0];
+      const now = new Date();
+
+      // helpers for boundaries
+      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+      const endOfToday = startOfToday + 24 * 60 * 60 * 1000;
+      const last7Cutoff = now.getTime() - 7 * 24 * 60 * 60 * 1000;
+      const last30Cutoff = now.getTime() - 30 * 24 * 60 * 60 * 1000;
+
+      list = list.filter(w => {
+        if (!w.savedAt) return false;
+        const t = new Date(w.savedAt).getTime();
+        if (Number.isNaN(t)) return false;
+        if (option === 'today') return t >= startOfToday && t < endOfToday;
+        if (option === 'last7') return t >= last7Cutoff;
+        if (option === 'last30') return t >= last30Cutoff;
+        return true;
+      });
+    }
     
     // Apply search filter
     if (searchTerm) {
@@ -322,12 +383,18 @@ export function OptionsApp() {
     }
   }
 
-  function toggleColumnFilter(column: 'contentType' | 'partOfSpeech', value: string) {
+  function toggleColumnFilter(column: 'contentType' | 'partOfSpeech' | 'dateAdded', value: string) {
     setColumnFilters(prev => {
       const currentFilters = prev[column];
-      const newFilters = currentFilters.includes(value)
-        ? currentFilters.filter(v => v !== value)
-        : [...currentFilters, value];
+      let newFilters: string[];
+      if (column === 'dateAdded') {
+        // single-select behavior
+        newFilters = currentFilters.includes(value) ? [] : [value];
+      } else {
+        newFilters = currentFilters.includes(value)
+          ? currentFilters.filter(v => v !== value)
+          : [...currentFilters, value];
+      }
       
       return {
         ...prev,
@@ -336,14 +403,14 @@ export function OptionsApp() {
     });
   }
 
-  function clearColumnFilters(column: 'contentType' | 'partOfSpeech') {
+  function clearColumnFilters(column: 'contentType' | 'partOfSpeech' | 'dateAdded') {
     setColumnFilters(prev => ({
       ...prev,
       [column]: []
     }));
   }
 
-  function hasActiveFilters(column: 'contentType' | 'partOfSpeech') {
+  function hasActiveFilters(column: 'contentType' | 'partOfSpeech' | 'dateAdded') {
     return columnFilters[column].length > 0;
   }
 
@@ -570,13 +637,15 @@ export function OptionsApp() {
   const showMw = preferredSource === 'merriam-webster';
   const showGemini = preferredSource === 'gemini';
   const showTranslation = preferredSource === 'gemini';
+  // Use the bundled asset URL so it is included in the extension build
+  const logoSrc = logoUrl;
 
   return (
     <div className="app-container">
       <div className="sidebar">
         <div className="sidebar-header">
           <div className="brand-container">
-            <img src="icons/logo.png" alt="Semantix Logo" className="brand-logo" />
+            <img src={logoSrc} alt="Semantix Logo" className="brand-logo" />
             <h1>Semantix</h1>
           </div>
         </div>
@@ -886,7 +955,7 @@ export function OptionsApp() {
                 <div className="words-header">
                   <h3>Your Vocabulary</h3>
                   <span className="words-count">
-                    {searchTerm || columnFilters.contentType.length > 0 || columnFilters.partOfSpeech.length > 0
+                    {searchTerm || columnFilters.contentType.length > 0 || columnFilters.partOfSpeech.length > 0 || columnFilters.dateAdded.length > 0
                       ? `${filteredWords.length} of ${savedWords.length} shown`
                       : `${savedWords.length} words saved`}
                   </span>
@@ -969,7 +1038,13 @@ export function OptionsApp() {
                               <ColumnHeader title="Examples" />
                             </th>
                             <th className="date-col">
-                              <ColumnHeader title="Date Added" />
+                              <ColumnHeader 
+                                title="Date Added" 
+                                isFilterable={true}
+                                isActive={activeColumnFilter === 'dateAdded'}
+                                hasActiveFilters={hasActiveFilters('dateAdded')}
+                                onMenuClick={(event) => toggleColumnMenu('dateAdded', event)}
+                              />
                             </th>
                             {/* <th className="actions-col">
                                <ColumnHeader title="Actions" />
@@ -1043,6 +1118,18 @@ export function OptionsApp() {
                       selectedValues={columnFilters.partOfSpeech}
                       onToggleFilter={(value) => toggleColumnFilter('partOfSpeech', value)}
                       onClearAll={() => clearColumnFilters('partOfSpeech')}
+                      onClose={() => setActiveColumnFilter(null)}
+                      triggerElement={filterTriggerElement}
+                    />
+                  )}
+
+                  {activeColumnFilter === 'dateAdded' && (
+                    <FilterPanel
+                      column="dateAdded"
+                      values={["today", "last7", "last30"]}
+                      selectedValues={columnFilters.dateAdded}
+                      onToggleFilter={(value) => toggleColumnFilter('dateAdded', value)}
+                      onClearAll={() => clearColumnFilters('dateAdded')}
                       onClose={() => setActiveColumnFilter(null)}
                       triggerElement={filterTriggerElement}
                     />

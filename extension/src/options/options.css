@@ -230,6 +230,25 @@ select:focus, input:focus, .SelectTrigger:focus {
   margin: 0;
 }
 
+.filters-row {
+  display: flex;
+  gap: 16px;
+  padding: 0 24px 16px 24px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 220px;
+}
+
+.filter-label {
+  font-size: 12px;
+  color: #64748b;
+}
+
 .words-list {
   max-height: 600px;
   overflow: auto;
@@ -243,7 +262,7 @@ select:focus, input:focus, .SelectTrigger:focus {
 
 .words-table {
   width: 100%;
-  min-width: 1300px;
+  min-width: 1380px; /* Updated from 1300px to account for increased column widths */
   border-collapse: separate;
   border-spacing: 0;
   font-size: 14px;
@@ -279,9 +298,9 @@ select:focus, input:focus, .SelectTrigger:focus {
 
 /* Column specific widths */
 .text-col { width: 200px; min-width: 200px; }
-.type-col { width: 140px; min-width: 140px; }
+.type-col { width: 180px; min-width: 180px; } /* Increased from 140px to 180px */
 .pronunciation-col { width: 150px; min-width: 150px; }
-.pos-col { width: 140px; min-width: 140px; }
+.pos-col { width: 180px; min-width: 180px; } /* Increased from 140px to 180px */
 .definition-col { width: 490px; min-width: 490px; max-width: 490px; }
 .translation-col { width: 200px; min-width: 200px; }
 .examples-col { width: 560px; min-width: 560px; max-width: 560px; }
@@ -394,5 +413,193 @@ select:focus, input:focus, .SelectTrigger:focus {
   .sidebar { width: 240px; }
   .content-body { padding: 24px; }
   .content-header { padding: 24px; }
+}
+
+/* Column Header and Filter Components */
+.column-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  position: relative;
+}
+
+.column-header.filterable {
+  cursor: pointer;
+  padding: 4px 8px;
+  margin: -4px -8px;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+}
+
+.column-header.filterable:hover {
+  background-color: #eff6ff;
+}
+
+.column-header.filterable.active {
+  background-color: #dbeafe;
+}
+
+.column-title {
+  flex: 1;
+  font-weight: 600;
+  color: #8691a0;
+}
+
+.column-menu-container {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.column-menu-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: 4px;
+  color: #64748b;
+  transition: color 0.2s ease;
+  padding: 0;
+  pointer-events: none; /* Disable pointer events so clicks go to parent */
+}
+
+.column-menu-btn.active-filter {
+  color: #3b82f6;
+}
+
+.column-menu-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Filter Panel */
+.filter-panel {
+  position: fixed;
+  z-index: 1000;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 10px 38px -10px rgba(0,0,0,0.35), 0 10px 20px -15px rgba(0,0,0,0.2);
+  min-width: 200px;
+  max-width: 300px;
+  margin-top: 4px;
+}
+
+.filter-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e2e8f0;
+  background-color: #f8fafc;
+  border-radius: 8px 8px 0 0;
+}
+
+.filter-panel-header h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  margin: 0;
+}
+
+.filter-close-btn {
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  color: #64748b;
+  font-size: 16px;
+  line-height: 1;
+  transition: all 0.2s ease;
+}
+
+.filter-close-btn:hover {
+  background-color: #e2e8f0;
+  color: #374151;
+}
+
+.filter-panel-body {
+  padding: 12px;
+}
+
+.filter-clear-btn {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background-color: #f8fafc;
+  color: #374151;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 12px;
+}
+
+.filter-clear-btn:hover {
+  background-color: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.filter-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.filter-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 4px 0;
+  font-size: 14px;
+}
+
+.filter-option input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #3b82f6;
+  cursor: pointer;
+}
+
+.filter-option-text {
+  color: #374151;
+  cursor: pointer;
+  flex: 1;
+}
+
+.filter-option:hover .filter-option-text {
+  color: #1e293b;
+}
+
+/* Ensure table headers have relative positioning for absolute positioned filter panels */
+.words-table th {
+  position: relative;
+}
+
+/* Adjust table header styling to accommodate new column headers */
+.words-table th {
+  background-color: #ffffff;
+  color: #8691a0;
+  font-weight: 600;
+  text-align: left;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e2e8f0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 

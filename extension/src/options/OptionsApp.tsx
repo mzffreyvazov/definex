@@ -33,6 +33,101 @@ const sourceDescriptions: Record<string, string> = {
   gemini: 'AI-powered definitions from Google Gemini. Requires API key. Supports single words, phrases & sentences.'
 };
 
+// Column Header Component with three-dot menu
+interface ColumnHeaderProps {
+  title: string;
+  isFilterable?: boolean;
+  isActive?: boolean;
+  hasActiveFilters?: boolean;
+  onMenuClick?: (event: React.MouseEvent) => void;
+}
+
+function ColumnHeader({ title, isFilterable = false, isActive = false, hasActiveFilters = false, onMenuClick }: ColumnHeaderProps) {
+  const handleClick = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    if (onMenuClick) {
+      onMenuClick(event);
+    }
+  };
+
+  return (
+    <div 
+      className={`column-header ${isFilterable ? 'filterable' : ''} ${isActive ? 'active' : ''}`}
+      onClick={isFilterable ? handleClick : undefined}
+    >
+      <span className="column-title">{title}</span>
+      {isFilterable && (
+        <div className="column-menu-container">
+          <button className={`column-menu-btn ${hasActiveFilters ? 'active-filter' : ''}`}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M10 20a1 1 0 0 0 .553.895l2 1A1 1 0 0 0 14 21v-7a2 2 0 0 1 .517-1.341L21.74 4.67A1 1 0 0 0 21 3H3a1 1 0 0 0-.742 1.67l7.225 7.989A2 2 0 0 1 10 14z"/>
+            </svg>
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Filter Panel Component
+interface FilterPanelProps {
+  column: 'contentType' | 'partOfSpeech';
+  values: string[];
+  selectedValues: string[];
+  onToggleFilter: (value: string) => void;
+  onClearAll: () => void;
+  onClose: () => void;
+  triggerElement?: HTMLElement | null;
+}
+
+function FilterPanel({ column, values, selectedValues, onToggleFilter, onClearAll, onClose, triggerElement }: FilterPanelProps) {
+  const [position, setPosition] = React.useState({ top: 0, left: 0 });
+
+  React.useEffect(() => {
+    if (triggerElement) {
+      const rect = triggerElement.getBoundingClientRect();
+      setPosition({
+        top: rect.bottom + 4,
+        left: rect.left
+      });
+    }
+  }, [triggerElement]);
+
+  return (
+    <div 
+      className="filter-panel"
+      style={{
+        top: `${position.top}px`,
+        left: `${position.left}px`
+      }}
+    >
+      <div className="filter-panel-header">
+        <h4>Filter {column === 'contentType' ? 'Content Type' : 'Part of Speech'}</h4>
+        <button className="filter-close-btn" onClick={onClose}>×</button>
+      </div>
+      <div className="filter-panel-body">
+        <button className="filter-clear-btn" onClick={onClearAll}>
+          Clear All
+        </button>
+        <div className="filter-options">
+          {values.map(value => (
+            <label key={value} className="filter-option">
+              <input
+                type="checkbox"
+                checked={selectedValues.includes(value)}
+                onChange={() => onToggleFilter(value)}
+              />
+              <span className="filter-option-text">
+                {value.charAt(0).toUpperCase() + value.slice(1)}
+              </span>
+            </label>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function OptionsApp() {
   const [activeSection, setActiveSection] = useState<'settings' | 'saved-words' | 'export' | 'statistics' | 'about'>('settings');
   const [isLoaded, setIsLoaded] = useState(false);
@@ -48,6 +143,17 @@ export function OptionsApp() {
 
   const [savedWords, setSavedWords] = useState<SavedWord[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+
+  // New inline column filtering states
+  const [activeColumnFilter, setActiveColumnFilter] = useState<string | null>(null);
+  const [filterTriggerElement, setFilterTriggerElement] = useState<HTMLElement | null>(null);
+  const [columnFilters, setColumnFilters] = useState<{
+    contentType: string[];
+    partOfSpeech: string[];
+  }>({
+    contentType: [],
+    partOfSpeech: []
+  });
 
   const [status, setStatus] = useState<{ text: string; type: 'success' | 'error' | 'warning' | 'info' } | null>(null);
 
@@ -79,15 +185,98 @@ export function OptionsApp() {
     );
   }, []);
 
+  // Get unique values for inline column filtering
+  const contentTypeValues = useMemo(() => {
+    return Array.from(
+      new Set(
+        (savedWords || [])
+          .map(w => (w.type || '').toString().trim().toLowerCase())
+          .filter(Boolean)
+      )
+    ).sort();
+  }, [savedWords]);
+
+  const partOfSpeechValues = useMemo(() => {
+    return Array.from(
+      new Set(
+        (savedWords || [])
+          .map(w => (w.partOfSpeech || '').toString().trim().toLowerCase())
+          .filter(Boolean)
+      )
+    ).sort();
+  }, [savedWords]);
+
   const filteredWords = useMemo(() => {
-    if (!searchTerm) return savedWords;
-    const term = searchTerm.toLowerCase();
-    return savedWords.filter(w => JSON.stringify(w).toLowerCase().includes(term));
-  }, [savedWords, searchTerm]);
+    let list = savedWords;
+    
+    // Apply inline column filters
+    if (columnFilters.contentType.length > 0) {
+      list = list.filter(w => {
+        const wordType = (w.type || '').toString().toLowerCase();
+        return columnFilters.contentType.includes(wordType);
+      });
+    }
+    
+    if (columnFilters.partOfSpeech.length > 0) {
+      list = list.filter(w => {
+        const wordPos = (w.partOfSpeech || '').toString().toLowerCase();
+        return columnFilters.partOfSpeech.includes(wordPos);
+      });
+    }
+    
+    // Apply search filter
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      list = list.filter(w => JSON.stringify(w).toLowerCase().includes(term));
+    }
+    
+    return list;
+  }, [savedWords, searchTerm, columnFilters]);
 
   function showStatus(text: string, type: 'success' | 'error' | 'warning' | 'info' = 'info') {
     setStatus({ text, type });
     setTimeout(() => setStatus(null), type === 'success' ? 2000 : 3000);
+  }
+
+  // Column filter helper functions
+  function toggleColumnMenu(column: string, event?: React.MouseEvent) {
+    if (activeColumnFilter === column) {
+      setActiveColumnFilter(null);
+      setFilterTriggerElement(null);
+    } else {
+      setActiveColumnFilter(column);
+      if (event) {
+        // Find the column header element
+        const target = event.currentTarget as HTMLElement;
+        const columnHeader = target.closest('.column-header') as HTMLElement;
+        setFilterTriggerElement(columnHeader);
+      }
+    }
+  }
+
+  function toggleColumnFilter(column: 'contentType' | 'partOfSpeech', value: string) {
+    setColumnFilters(prev => {
+      const currentFilters = prev[column];
+      const newFilters = currentFilters.includes(value)
+        ? currentFilters.filter(v => v !== value)
+        : [...currentFilters, value];
+      
+      return {
+        ...prev,
+        [column]: newFilters
+      };
+    });
+  }
+
+  function clearColumnFilters(column: 'contentType' | 'partOfSpeech') {
+    setColumnFilters(prev => ({
+      ...prev,
+      [column]: []
+    }));
+  }
+
+  function hasActiveFilters(column: 'contentType' | 'partOfSpeech') {
+    return columnFilters[column].length > 0;
   }
 
   function handleSave(e: React.FormEvent) {
@@ -253,6 +442,22 @@ export function OptionsApp() {
       (window as any)._orig_el = r.elevenlabsApiKey || '';
     });
   }, []);
+
+  // Handle clicking outside filter panel to close it
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      const target = event.target as Element;
+      if (activeColumnFilter && !target.closest('.filter-panel') && !target.closest('.column-menu-btn')) {
+        setActiveColumnFilter(null);
+        setFilterTriggerElement(null);
+      }
+    }
+
+    if (activeColumnFilter) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [activeColumnFilter]);
 
   const sourceDescription = sourceDescriptions[preferredSource] || '';
   const showMw = preferredSource === 'merriam-webster';
@@ -573,7 +778,11 @@ export function OptionsApp() {
               <div className="words-container">
                 <div className="words-header">
                   <h3>Your Vocabulary</h3>
-                  <span className="words-count">{savedWords.length} words saved</span>
+                  <span className="words-count">
+                    {searchTerm || columnFilters.contentType.length > 0 || columnFilters.partOfSpeech.length > 0
+                      ? `${filteredWords.length} of ${savedWords.length} shown`
+                      : `${savedWords.length} words saved`}
+                  </span>
                 </div>
                 <div className="search-box">
                   <input type="text" className="search-input" placeholder="Search saved words..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
@@ -592,14 +801,42 @@ export function OptionsApp() {
                       <table className="words-table">
                         <thead>
                           <tr>
-                            <th className="text-col">Text</th>
-                            <th className="type-col">Content Type</th>
-                            <th className="pronunciation-col">Pronunciation</th>
-                            <th className="pos-col">Part of Speech</th>
-                            <th className="definition-col">Definition</th>
-                            <th className="translation-col">Translation</th>
-                            <th className="examples-col">Examples</th>
-                            <th className="date-col">Date Added</th>
+                            <th className="text-col">
+                              <ColumnHeader title="Text" />
+                            </th>
+                            <th className="type-col">
+                              <ColumnHeader 
+                                title="Content Type" 
+                                isFilterable={true}
+                                isActive={activeColumnFilter === 'contentType'}
+                                hasActiveFilters={hasActiveFilters('contentType')}
+                                onMenuClick={(event) => toggleColumnMenu('contentType', event)}
+                              />
+                            </th>
+                            <th className="pronunciation-col">
+                              <ColumnHeader title="Pronunciation" />
+                            </th>
+                            <th className="pos-col">
+                              <ColumnHeader 
+                                title="Part of Speech" 
+                                isFilterable={true}
+                                isActive={activeColumnFilter === 'partOfSpeech'}
+                                hasActiveFilters={hasActiveFilters('partOfSpeech')}
+                                onMenuClick={(event) => toggleColumnMenu('partOfSpeech', event)}
+                              />
+                            </th>
+                            <th className="definition-col">
+                              <ColumnHeader title="Definition" />
+                            </th>
+                            <th className="translation-col">
+                              <ColumnHeader title="Translation" />
+                            </th>
+                            <th className="examples-col">
+                              <ColumnHeader title="Examples" />
+                            </th>
+                            <th className="date-col">
+                              <ColumnHeader title="Date Added" />
+                            </th>
                           </tr>
                         </thead>
                         <tbody>
@@ -634,6 +871,31 @@ export function OptionsApp() {
                         </tbody>
                       </table>
                     </div>
+                  )}
+                  
+                  {/* Filter Panels - rendered outside table for proper overlay positioning */}
+                  {activeColumnFilter === 'contentType' && (
+                    <FilterPanel
+                      column="contentType"
+                      values={contentTypeValues}
+                      selectedValues={columnFilters.contentType}
+                      onToggleFilter={(value) => toggleColumnFilter('contentType', value)}
+                      onClearAll={() => clearColumnFilters('contentType')}
+                      onClose={() => setActiveColumnFilter(null)}
+                      triggerElement={filterTriggerElement}
+                    />
+                  )}
+                  
+                  {activeColumnFilter === 'partOfSpeech' && (
+                    <FilterPanel
+                      column="partOfSpeech"
+                      values={partOfSpeechValues}
+                      selectedValues={columnFilters.partOfSpeech}
+                      onToggleFilter={(value) => toggleColumnFilter('partOfSpeech', value)}
+                      onClearAll={() => clearColumnFilters('partOfSpeech')}
+                      onClose={() => setActiveColumnFilter(null)}
+                      triggerElement={filterTriggerElement}
+                    />
                   )}
                 </div>
               </div>
@@ -716,7 +978,6 @@ export function OptionsApp() {
                     <li>Support for multiple languages</li>
                     <li>Save words for later review</li>
                     <li>Export your vocabulary data</li>
-                    <li>Customizable popup positioning</li>
                   </ul>
                 </div>
               </div>

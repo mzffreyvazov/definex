@@ -154,7 +154,7 @@ app.get("/api/cache/clear", (req, res) => {
 
 app.get("/", (req, res) => {
   res.json({
-    name: "LexiLens API",
+    name: "DefineX API",
     status: "ok",
     endpoints: {
       dictionary: "/api/dictionary/:language/:entry",

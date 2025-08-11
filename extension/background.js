@@ -11,6 +11,35 @@
  * 6. Caches the final result and sends it back to the content script.
  */
 
+// --- Context Menu Setup ---
+
+// Create the context menu on install/update
+chrome.runtime.onInstalled.addListener(() => {
+  try {
+    chrome.contextMenus.removeAll(() => {
+      chrome.contextMenus.create({
+        id: 'lexilens-lookup',
+        title: 'Look up “%s” with DefineX',
+        contexts: ['selection']
+      });
+    });
+  } catch (e) {
+    // Ignore errors if context menus not available in some environments
+    console.warn('Context menu setup error:', e);
+  }
+});
+
+// Handle context menu clicks
+chrome.contextMenus?.onClicked.addListener((info, tab) => {
+  if (info.menuItemId === 'lexilens-lookup' && info.selectionText && tab?.id) {
+    // Forward selection to the content script to handle UI and lookup
+    chrome.tabs.sendMessage(tab.id, {
+      type: 'contextLookup',
+      text: info.selectionText
+    });
+  }
+});
+
 // --- Data Normalization Functions ---
 
 function normalizeMwData(mwData) {

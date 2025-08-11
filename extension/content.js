@@ -42,7 +42,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             // Clear any existing popup
             clearPopupData();
         }
+  }
+
+  // Handle lookup from context menu
+  if (message.type === 'contextLookup' && typeof message.text === 'string') {
+    try {
+      handleContextLookup(message.text);
+    } catch (e) {
+      console.error('Context lookup failed:', e);
     }
+  }
 });
 
 let popup = null;
@@ -214,6 +223,66 @@ function handleSelection(event) {
     // Show results as soon as they're ready (no extra delay)
     showAfter();
     });
+  });
+}
+
+// Triggered by context menu; uses current selection position if available
+function handleContextLookup(selectedText) {
+  const selection = window.getSelection();
+  let mouseX = 0;
+  let mouseY = 0;
+
+  // Prefer the current selection's bounding rect for positioning
+  if (selection && selection.rangeCount > 0) {
+    const range = selection.getRangeAt(0);
+    const rect = range.getBoundingClientRect();
+    selectionRange = range.cloneRange();
+    mouseX = rect.right;
+    mouseY = rect.bottom;
+  } else {
+    // Fallback to top-left if no range (will reposition on scroll/resize)
+    mouseX = 20;
+    mouseY = 20;
+  }
+
+  const text = (selectedText || '').trim();
+  if (!text) return;
+
+  // Remove existing popup
+  clearPopupData();
+
+  // Decide if this is sentence-like or definition-like (reuse logic)
+  const words = text.split(/\s+/).filter(w => w.length > 0);
+  const isLongSentence = words.length > 5;
+  const isSentenceLike = isLongSentence;
+
+  // Show skeleton
+  const skeleton = buildSkeletonPlaceholder(isSentenceLike);
+  createPopup(mouseX, mouseY, skeleton, isSentenceLike);
+
+  const messageType = isSentenceLike ? 'translateSentence' : 'getDefinition';
+  const payload = isSentenceLike ? { type: messageType, text } : { type: messageType, word: text };
+
+  chrome.runtime.sendMessage(payload, (response) => {
+    if (chrome.runtime.lastError) {
+      updatePopupContent('Error: Could not connect to the extension.');
+      return;
+    }
+    if (response.status === 'success') {
+      const ttsEnabled = response.ttsEnabled || false;
+      const enableTtsForWord = response.enableTtsForWord || false;
+      const elevenlabsApiKey = response.elevenlabsApiKey || '';
+      window.elevenlabsApiKey = elevenlabsApiKey;
+      const content = isSentenceLike ? formatTranslationData(response.data, ttsEnabled) : formatData(response.data, ttsEnabled, enableTtsForWord);
+      updatePopupContent(content);
+    } else if (response.status === 'noLanguage') {
+      updatePopupContent(`<div style="padding: 20px; text-align: center; font-family: 'Open Sans', sans-serif; line-height: 1.5;">
+        <div style="font-size: 16px; font-weight: 600; color: #dc3545; margin-bottom: 12px;">⚠️ No Target Language Selected</div>
+        <div style="font-size: 14px; color: #666;">${response.message}</div>
+      </div>`);
+    } else {
+      updatePopupContent(`Error: ${response.message || (isSentenceLike ? 'Translation failed.' : 'Definition not found.')}`);
+    }
   });
 }
 

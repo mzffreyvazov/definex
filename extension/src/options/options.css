@@ -222,16 +222,43 @@ select:focus, input:focus, .SelectTrigger:focus {
 .search-and-actions {
   padding: 16px 24px 4px 24px;
   background-color: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* Keep the action toolbar on a separate row but with same background and left alignment */
+.action-toolbar-row {
+  background-color: #f8fafc; /* same as search-and-actions */
+  padding: 0 24px 8px 24px;  /* align left with table/search; slight bottom spacing */
 }
 
 .search-box {
   margin-bottom: 12px;
+  flex: 1;
 }
 
 .search-input {
   width: 100%;
   max-width: none;
   margin: 0;
+}
+
+/* Clear Filters button, shown only when filters are active */
+.clear-filters-btn {
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  color: #374151;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  white-space: nowrap;
+}
+.clear-filters-btn:hover {
+  background: #f1f5f9;
 }
 
 /* Action Toolbar */

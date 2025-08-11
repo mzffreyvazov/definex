@@ -962,24 +962,45 @@ export function OptionsApp() {
                 </div>
                 <div className="search-and-actions">
                   <div className="search-box">
-                    <input type="text" className="search-input" placeholder="Search saved words..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+                    <input
+                      type="text"
+                      className="search-input"
+                      placeholder="Search saved words..."
+                      value={searchTerm}
+                      onChange={e => setSearchTerm(e.target.value)}
+                    />
                   </div>
-                  {selectedWords.size > 0 && (
-                    <div className="action-toolbar">
-                        <span className="action-toolbar-label">
-                            {selectedWords.size} selected
-                        </span>
-                        <button onClick={exportSelectedCSV} className="action-toolbar-btn" title="Export Selected">
-                            <DownloadIcon size={14} />
-                            Export
-                        </button>
-                        <button onClick={deleteSelectedWords} className="action-toolbar-btn delete" title="Delete Selected">
-                            <TrashIcon size={14} />
-                            Delete
-                        </button>
-                    </div>
+                  {(columnFilters.contentType.length > 0 || columnFilters.partOfSpeech.length > 0 || columnFilters.dateAdded.length > 0) && (
+                    <button
+                      className="clear-filters-btn"
+                      onClick={() => {
+                        clearColumnFilters('contentType');
+                        clearColumnFilters('partOfSpeech');
+                        clearColumnFilters('dateAdded');
+                        setActiveColumnFilter(null);
+                      }}
+                      title="Clear all active filters"
+                    >
+                      Clear Filters
+                    </button>
                   )}
                 </div>
+
+                {selectedWords.size > 0 && (
+                  <div className="action-toolbar-row">
+                    <div className="action-toolbar">
+                      <span className="action-toolbar-label">{selectedWords.size} selected</span>
+                      <button onClick={exportSelectedCSV} className="action-toolbar-btn" title="Export Selected">
+                        <DownloadIcon size={14} />
+                        Export
+                      </button>
+                      <button onClick={deleteSelectedWords} className="action-toolbar-btn delete" title="Delete Selected">
+                        <TrashIcon size={14} />
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 <div className="words-list">
                   {filteredWords.length === 0 ? (

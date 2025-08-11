@@ -15,7 +15,7 @@
     "scripting"
   ],
   "host_permissions": [
-    "https://semantix.onrender.com/*",
+    "http://209.38.36.112/*",
     "https://www.dictionaryapi.com/*" 
   ],
   "background": {

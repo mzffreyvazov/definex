@@ -39,21 +39,30 @@ function normalizeGeminiData(aiData) {
   if (!aiData || !aiData.forms || aiData.forms.length === 0) {
     return null;
   }
+  
+  // Safely handle forms array
   const definitions = aiData.forms.map(form => {
-    const firstDef = form.definitions[0];
+    const firstDef = form.definitions && form.definitions.length > 0 ? form.definitions[0] : {};
     return {
       pos: form.partOfSpeech || 'unknown',
       text: firstDef.definition || 'No definition text found.',
       translation: firstDef.definitionTranslation || null, // Add translation support
       example: firstDef.examples ? firstDef.examples.map(ex => ({
-        text: typeof ex === 'string' ? ex : ex.text,
+        text: typeof ex === 'string' ? ex : (ex.text || ''),
         translation: typeof ex === 'object' ? ex.translation : null // Add translation support for examples
       })) : []
     };
   });
-  const pronunciation = { lang: 'us', pron: aiData.pronunciation || '', url: '' };
+  
+  // Safely handle pronunciation - provide default values if null/undefined
+  const pronunciation = { 
+    lang: 'us', 
+    pron: (aiData.pronunciation && typeof aiData.pronunciation === 'string') ? aiData.pronunciation : '', 
+    url: '' 
+  };
+  
   return {
-    word: aiData.word || aiData.phrase, // Handle both word and phrase properties
+    word: aiData.word || aiData.phrase || 'Unknown', // Handle both word and phrase properties
     translation: aiData.translation || null, // Add word/phrase translation
     pos: definitions.map(d => d.pos),
     verbs: [],
@@ -125,11 +134,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (isPhrase && geminiKey && geminiKey.trim() && source !== 'gemini') {
           const encodedWord = encodeURIComponent(word);
           const langParam = targetLanguage !== 'none' ? `?lang=${encodeURIComponent(targetLanguage)}` : '';
-          const geminiUrl = `https://semantix.onrender.com/api/gemini/${encodedWord}${langParam}`;
+          const geminiUrl = `http://209.38.36.112/api/gemini/${encodedWord}${langParam}`;
           const fetchOpts = { headers: { 'x-api-key': geminiKey.trim() } };
           apiPromise = fetch(geminiUrl, fetchOpts)
-            .then(res => res.json())
-            .then(normalizeGeminiData);
+            .then(res => {
+              if (!res.ok) {
+                throw new Error(`Gemini API returned ${res.status}: ${res.statusText}`);
+              }
+              return res.json();
+            })
+            .then(data => {
+              if (data.error) {
+                throw new Error(data.error);
+              }
+              return normalizeGeminiData(data);
+            });
         } else if (source === 'gemini') {
           // --- REQUIRE geminiApiKey ---
           if (!geminiKey || !geminiKey.trim()) {
@@ -139,7 +158,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
           const encodedWord = encodeURIComponent(word);
           const langParam = targetLanguage !== 'none' ? `?lang=${encodeURIComponent(targetLanguage)}` : '';
-          const geminiUrl = `https://semantix.onrender.com/api/gemini/${encodedWord}${langParam}`;
+          const geminiUrl = `http://209.38.36.112/api/gemini/${encodedWord}${langParam}`;
           const fetchOpts = { headers: { 'x-api-key': geminiKey.trim() } }; // <--- pass key
 
           const words = word.split(/\s+/).filter(w => w);
@@ -147,18 +166,40 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
           if (isPhrase) {
             apiPromise = fetch(geminiUrl, fetchOpts)
-              .then(res => res.json())
-              .then(normalizeGeminiData);
+              .then(res => {
+                if (!res.ok) {
+                  throw new Error(`Gemini API returned ${res.status}: ${res.statusText}`);
+                }
+                return res.json();
+              })
+              .then(data => {
+                if (data.error) {
+                  throw new Error(data.error);
+                }
+                return normalizeGeminiData(data);
+              });
           } else {
-            const cambridgeUrl = `https://semantix.onrender.com/api/dictionary/en/${encodedWord}`;
+            const cambridgeUrl = `http://209.38.36.112/api/dictionary/en/${encodedWord}`;
             apiPromise = Promise.all([
-              fetch(geminiUrl, fetchOpts).then(res => res.json()),
+              fetch(geminiUrl, fetchOpts)
+                .then(res => {
+                  if (!res.ok) {
+                    throw new Error(`Gemini API returned ${res.status}: ${res.statusText}`);
+                  }
+                  return res.json();
+                })
+                .then(data => {
+                  if (data.error) {
+                    throw new Error(data.error);
+                  }
+                  return data;
+                }),
               fetch(cambridgeUrl).then(res => res.json().catch(() => null))
             ]).then(([geminiData, cambridgeData]) => {
               const normalized = normalizeGeminiData(geminiData);
-              if (cambridgeData?.pronunciation?.length) {
+              if (normalized && cambridgeData?.pronunciation?.length) {
                 const camPron = cambridgeData.pronunciation.find(p => p.url) || cambridgeData.pronunciation[0];
-                if (camPron) {
+                if (camPron && normalized.pronunciation && normalized.pronunciation[0]) {
                   normalized.pronunciation[0].url ||= camPron.url;
                   normalized.pronunciation[0].pron ||= camPron.pron;
                 }
@@ -177,7 +218,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             .then(res => res.json())
             .then(data => normalizeMwData(data));
         } else {
-          const apiUrl = `https://semantix.onrender.com/api/dictionary/en/${word}`;
+          const apiUrl = `http://209.38.36.112/api/dictionary/en/${word}`;
           apiPromise = fetch(apiUrl).then(res => res.json());
         }
 
@@ -234,7 +275,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         console.log(`Translating sentence: "${sentence}"`);
         const encodedSentence = encodeURIComponent(sentence);
         const langParam = `?lang=${encodeURIComponent(targetLanguage)}`;
-        const translateUrl = `https://semantix.onrender.com/api/translate/${encodedSentence}${langParam}`;
+        const translateUrl = `http://209.38.36.112/api/translate/${encodedSentence}${langParam}`;
 
         fetch(translateUrl, { headers: { 'x-api-key': geminiKey.trim() } })
           .then(res => res.json())

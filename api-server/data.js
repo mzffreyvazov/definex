@@ -552,6 +552,37 @@ app.get("/api/gemini/:entry", async (req, res) => {
 
     // Now, parse the cleaned string
     const jsonResponse = JSON.parse(responseText);
+    
+    // Validate the response structure
+    if (jsonResponse.error) {
+      return res.status(404).json(jsonResponse);
+    }
+    
+    // Ensure basic structure exists
+    if (!jsonResponse.forms || !Array.isArray(jsonResponse.forms) || jsonResponse.forms.length === 0) {
+      console.warn("Invalid Gemini response structure:", jsonResponse);
+      return res.status(500).json({ error: "Invalid response structure from AI" });
+    }
+    
+    // Validate each form has required properties
+    jsonResponse.forms = jsonResponse.forms.map(form => ({
+      partOfSpeech: form.partOfSpeech || 'unknown',
+      definitions: (form.definitions || []).map(def => ({
+        definition: def.definition || 'No definition available',
+        definitionTranslation: def.definitionTranslation || null,
+        examples: Array.isArray(def.examples) ? def.examples : []
+      }))
+    }));
+    
+    // Ensure basic properties exist
+    if (!jsonResponse.word && !jsonResponse.phrase) {
+      jsonResponse.word = word;
+    }
+    
+    // Ensure pronunciation is a string or null, not undefined
+    if (typeof jsonResponse.pronunciation !== 'string') {
+      jsonResponse.pronunciation = '';
+    }
 
     res.status(200).json(jsonResponse);
   } catch (error) {
@@ -559,7 +590,15 @@ app.get("/api/gemini/:entry", async (req, res) => {
     if (rawTextForErrorLog) {
       console.error("Original AI response text:", rawTextForErrorLog);
     }
-    res.status(500).json({ error: "Failed to process AI response." });
+    
+    // Return a more helpful error response
+    const fallbackResponse = {
+      error: "Failed to process AI response",
+      details: error.message,
+      word: req.params.entry
+    };
+    
+    res.status(500).json(fallbackResponse);
   }
 });
 

@@ -670,10 +670,11 @@ app.get("/api/tts/:text", async (req, res) => {
     const words = text.trim().split(/\s+/);
     const wordCount = words.length;
     
-    // Only allow phrases (2-5 words) and sentences (6+ words)
-    if (wordCount < 2) {
+    // Allow single words, phrases (2-5 words) and sentences (6+ words)
+    // Previously only allowed phrases and sentences, now also allows single words
+    if (wordCount < 1) {
       return res.status(400).json({ 
-        error: "Text-to-speech is only available for phrases (2-5 words) and sentences (6+ words), not individual words." 
+        error: "No text provided for text-to-speech." 
       });
     }
     

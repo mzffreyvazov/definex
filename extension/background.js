@@ -228,9 +228,34 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           }
           
           const finalData = applyDisplayPreferences(fullData, settings);
+          
+          // Check if this is a single word and if TTS should be enabled as fallback
+          const words = word.split(/\s+/).filter(w => w);
+          const isSingleWord = words.length === 1;
+          let enableTtsForWord = false;
+          
+          // Enable TTS for single words if:
+          // 1. TTS is enabled in settings
+          // 2. No audio URL is available from Cambridge/other sources
+          if (isSingleWord && settings.ttsEnabled && elevenlabsApiKey) {
+            const hasAudio = finalData.pronunciation && 
+                            finalData.pronunciation.length > 0 && 
+                            finalData.pronunciation[0].url && 
+                            finalData.pronunciation[0].url.trim() !== '';
+            
+            if (!hasAudio) {
+              enableTtsForWord = true;
+            }
+          }
 
           chrome.storage.local.set({ [cacheKey]: finalData });
-          sendResponse({ status: 'success', data: finalData, ttsEnabled: settings.ttsEnabled, elevenlabsApiKey: elevenlabsApiKey });
+          sendResponse({ 
+            status: 'success', 
+            data: finalData, 
+            ttsEnabled: settings.ttsEnabled, 
+            elevenlabsApiKey: elevenlabsApiKey,
+            enableTtsForWord: enableTtsForWord // New flag for single word TTS
+          });
         }).catch(err => {
           sendResponse({ status: 'error', message: err.message });
         });

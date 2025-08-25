@@ -11,6 +11,9 @@
  * 6. Caches the final result and sends it back to the content script.
  */
 
+// Import API configuration
+import { API_URLS } from './config/api-config.js';
+
 // --- Context Menu Setup ---
 
 // Create the context menu on install/update
@@ -51,7 +54,7 @@ function normalizeMwData(mwData) {
     if (entry.hwi.prs[0].sound) {
       const audioFile = entry.hwi.prs[0].sound.audio;
       const subdir = audioFile.startsWith("bix") ? "bix" : audioFile.startsWith("gg") ? "gg" : audioFile.match(/^_[0-9]/) ? "number" : audioFile.charAt(0);
-      pronunciation.url = `https://media.merriam-webster.com/audio/prons/en/us/wav/${subdir}/${audioFile}.wav`;
+      pronunciation.url = API_URLS.merriamAudio(subdir, audioFile);
     }
   }
   const definition = { pos: entry.fl || 'unknown', text: entry.shortdef[0] || 'No definition found.', example: [] };
@@ -163,7 +166,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (isPhrase && geminiKey && geminiKey.trim() && source !== 'gemini') {
           const encodedWord = encodeURIComponent(word);
           const langParam = targetLanguage !== 'none' ? `?lang=${encodeURIComponent(targetLanguage)}` : '';
-          const geminiUrl = `http://209.38.36.112/api/gemini/${encodedWord}${langParam}`;
+          const geminiUrl = API_URLS.gemini(word, langParam);
           const fetchOpts = { headers: { 'x-api-key': geminiKey.trim() } };
           apiPromise = fetch(geminiUrl, fetchOpts)
             .then(res => {
@@ -187,7 +190,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
           const encodedWord = encodeURIComponent(word);
           const langParam = targetLanguage !== 'none' ? `?lang=${encodeURIComponent(targetLanguage)}` : '';
-          const geminiUrl = `http://209.38.36.112/api/gemini/${encodedWord}${langParam}`;
+          const geminiUrl = API_URLS.gemini(word, langParam);
           const fetchOpts = { headers: { 'x-api-key': geminiKey.trim() } }; // <--- pass key
 
           const words = word.split(/\s+/).filter(w => w);
@@ -208,7 +211,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 return normalizeGeminiData(data);
               });
           } else {
-            const cambridgeUrl = `http://209.38.36.112/api/dictionary/en/${encodedWord}`;
+            const cambridgeUrl = API_URLS.dictionary(word);
             apiPromise = Promise.all([
               fetch(geminiUrl, fetchOpts)
                 .then(res => {
@@ -242,12 +245,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             sendResponse({ status: 'error', message: 'Merriam-Webster API key is not set.' });
             return;
           }
-          const apiUrl = `https://www.dictionaryapi.com/api/v3/references/collegiate/json/${word}?key=${mwApiKey}`;
+          const apiUrl = API_URLS.merriamWebster(word, mwApiKey);
           apiPromise = fetch(apiUrl)
             .then(res => res.json())
             .then(data => normalizeMwData(data));
         } else {
-          const apiUrl = `http://209.38.36.112/api/dictionary/en/${word}`;
+          const apiUrl = API_URLS.dictionary(word);
           apiPromise = fetch(apiUrl).then(res => res.json());
         }
 
@@ -329,7 +332,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         console.log(`Translating sentence: "${sentence}"`);
         const encodedSentence = encodeURIComponent(sentence);
         const langParam = `?lang=${encodeURIComponent(targetLanguage)}`;
-        const translateUrl = `http://209.38.36.112/api/translate/${encodedSentence}${langParam}`;
+        const translateUrl = API_URLS.translate(sentence, langParam);
 
         fetch(translateUrl, { headers: { 'x-api-key': geminiKey.trim() } })
           .then(res => res.json())

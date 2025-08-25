@@ -1,3 +1,6 @@
+// Import API configuration
+import { API_URLS } from './config/api-config.js';
+
 // Check if extension is enabled for this site before setting up event listeners
 chrome.storage.local.get('enabledSites', (data) => {
     const enabledSites = data.enabledSites || [];
@@ -528,7 +531,7 @@ function playTTS(event) {
         
         // Create TTS audio URL
         const encodedText = encodeURIComponent(text);
-        const ttsUrl = `http://209.38.36.112/api/tts/${encodedText}`;
+        const ttsUrl = API_URLS.tts(text);
         
         // Prepare headers with ElevenLabs API key if available
         const headers = {};

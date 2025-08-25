@@ -10,7 +10,7 @@
  */
 
 // 🎯 MAIN TOGGLE: Change this to switch environments
-const USE_LOCAL_API = true; // Set to true for local development, false for production
+const USE_LOCAL_API = false; // Set to true for local development, false for production
 
 // Environment configurations
 const API_CONFIG = {

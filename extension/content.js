@@ -211,6 +211,12 @@ function handleSelection(event) {
           const enableTtsForWord = response.enableTtsForWord || false;
           const elevenlabsApiKey = response.elevenlabsApiKey || '';
           window.elevenlabsApiKey = elevenlabsApiKey;
+          
+          // Pre-cache audio files immediately when data is received
+          if (!isSentenceLike) {
+            precacheAudioFromData(response.data);
+          }
+          
           const content = isSentenceLike ? formatTranslationData(response.data, ttsEnabled) : formatData(response.data, ttsEnabled, enableTtsForWord);
           updatePopupContent(content);
         } else if (response.status === 'noLanguage') {
@@ -276,6 +282,12 @@ function handleContextLookup(selectedText) {
       const enableTtsForWord = response.enableTtsForWord || false;
       const elevenlabsApiKey = response.elevenlabsApiKey || '';
       window.elevenlabsApiKey = elevenlabsApiKey;
+      
+      // Pre-cache audio files immediately when data is received (context lookup)
+      if (!isSentenceLike) {
+        precacheAudioFromData(response.data);
+      }
+      
       const content = isSentenceLike ? formatTranslationData(response.data, ttsEnabled) : formatData(response.data, ttsEnabled, enableTtsForWord);
       updatePopupContent(content);
     } else if (response.status === 'noLanguage') {
@@ -467,6 +479,58 @@ function updatePopupContent(content) {
     popup.innerHTML = content;
     popupContent = content; // Update stored content
     addPopupEventListeners();
+    preloadAudio(); // Preload audio files for instant playback
+  }
+}
+
+// Pre-cache audio files from word data immediately when received
+function precacheAudioFromData(data) {
+  if (data && data.pronunciation) {
+    // Look for audio URLs in pronunciation data
+    data.pronunciation.forEach(pron => {
+      if (pron.url && pron.url.trim() && !audioCache.has(pron.url)) {
+        // Start preloading the audio immediately
+        const audio = new Audio();
+        audio.preload = 'auto';
+        audio.src = pron.url;
+        
+        // Cache when ready to play
+        audio.addEventListener('canplaythrough', () => {
+          cleanupAudioCache();
+          audioCache.set(pron.url, audio);
+          console.log('Pre-cached pronunciation audio:', pron.url);
+        }, { once: true });
+        
+        // Start loading silently in background
+        audio.load();
+      }
+    });
+  }
+}
+
+// Preload audio files for instant playback
+function preloadAudio() {
+  const audioButton = document.getElementById('qdp-audio-btn');
+  if (audioButton) {
+    const audioSrc = audioButton.getAttribute('data-audio-src');
+    if (audioSrc && !audioCache.has(audioSrc)) {
+      // Only preload if not already cached (precacheAudioFromData might have already done this)
+      const audio = new Audio();
+      audio.preload = 'auto';
+      audio.src = audioSrc;
+      
+      // Cache when ready
+      audio.addEventListener('canplaythrough', () => {
+        cleanupAudioCache();
+        audioCache.set(audioSrc, audio);
+        console.log('Preloaded pronunciation audio from popup:', audioSrc);
+      }, { once: true });
+      
+      // Start loading
+      audio.load();
+    } else if (audioSrc && audioCache.has(audioSrc)) {
+      console.log('Audio already cached:', audioSrc);
+    }
   }
 }
 
@@ -500,8 +564,40 @@ function playAudio(event) {
     const button = event.currentTarget || event.target;
     const audioSrc = button.getAttribute('data-audio-src');
     if (audioSrc) {
-        const audio = new Audio(audioSrc);
-        audio.play();
+        // Use audio URL as cache key
+        const cacheKey = audioSrc;
+        
+        // Check if audio is already cached
+        if (audioCache.has(cacheKey)) {
+            const cachedAudio = audioCache.get(cacheKey);
+            cachedAudio.currentTime = 0; // Reset to beginning
+            cachedAudio.play().catch(error => {
+                console.error('Cached pronunciation playback failed:', error);
+            });
+            return;
+        }
+        
+        // Create new audio object with preloading
+        const audio = new Audio();
+        audio.preload = 'auto'; // Enable preloading
+        audio.src = audioSrc;
+        
+        // Cache the audio once it's loaded and ready to play
+        audio.addEventListener('canplaythrough', () => {
+            cleanupAudioCache(); // Check cache size before adding
+            audioCache.set(cacheKey, audio);
+        }, { once: true }); // Only fire once
+        
+        // Add error handling for audio loading/playback
+        audio.addEventListener('error', (e) => {
+            console.error('Audio loading/playback error:', e);
+        });
+        
+        // Start loading the audio and play when ready
+        audio.load();
+        audio.play().catch(error => {
+            console.error('Pronunciation playback failed:', error);
+        });
     }
 }
 

@@ -24,7 +24,7 @@ const API_CONFIG = {
     }
   },
   production: {
-    base: 'http://209.38.36.112',
+    base: 'https://definex.tech',
     endpoints: {
       gemini: '/api/gemini',
       dictionary: '/api/dictionary/en',

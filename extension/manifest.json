@@ -15,7 +15,7 @@
   "contextMenus"
   ],
   "host_permissions": [
-    "http://209.38.36.112/*",
+    "https://definex.tech/*",
     "https://www.dictionaryapi.com/*" 
   ],
   "background": {

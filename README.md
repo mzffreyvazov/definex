@@ -41,7 +41,7 @@ npm install
 ```bash
 npm start
 ```
-The server will run on `http://209.38.36.112`
+The server will run on `https://definex.tech`
 
 ### 4. Load the Extension
 1. Open Chrome and go to `chrome://extensions/`  
@@ -130,5 +130,5 @@ The server will run on `http://209.38.36.112`
 
 ### Extension not responding
 - Check that the DefineX extension is properly loaded in `chrome://extensions/`  
-- Make sure the API server is running on `http://209.38.36.112`  
+- Make sure the API server is running on `https://definex.tech`  
 - Try reloading the extension and the page

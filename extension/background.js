@@ -20,11 +20,8 @@ import { API_URLS } from './config/api-config.js';
 chrome.runtime.onInstalled.addListener(() => {
   try {
     chrome.contextMenus.removeAll(() => {
-      chrome.contextMenus.create({
-        id: 'lexilens-lookup',
-        title: 'Look up “%s” with DefineX',
-        contexts: ['selection']
-      });
+  // Do not create immediately; it will be created on-demand per-site in onShown
+  // to ensure it doesn't appear on disabled sites.
     });
   } catch (e) {
     // Ignore errors if context menus not available in some environments
@@ -32,9 +29,103 @@ chrome.runtime.onInstalled.addListener(() => {
   }
 });
 
+// Keep a cached copy of enabled sites to drive context menu visibility
+let enabledSitesCache = [];
+let menuPresent = false;
+const MENU_ID = 'definex-lookup';
+
+function createLookupMenu() {
+  if (menuPresent) return;
+  try {
+    chrome.contextMenus.create({
+      id: MENU_ID,
+      title: 'Look up “%s” with DefineX',
+      contexts: ['selection']
+    }, () => {
+      if (!chrome.runtime.lastError) {
+        menuPresent = true;
+      }
+    });
+  } catch (_) { /* no-op */ }
+}
+
+function removeLookupMenu() {
+  if (!menuPresent) return;
+  try {
+    chrome.contextMenus.remove(MENU_ID, () => {
+      // If remove fails (e.g., already gone), reset flag anyway
+      menuPresent = false;
+    });
+  } catch (_) { menuPresent = false; }
+}
+
+// Initialize cache on service worker startup
+chrome.storage?.local.get(['enabledSites'], (res) => {
+  enabledSitesCache = Array.isArray(res.enabledSites) ? res.enabledSites : [];
+});
+
+// Update cache whenever options change
+chrome.storage?.onChanged.addListener((changes, areaName) => {
+  if (areaName === 'local' && changes.enabledSites) {
+    const newVal = changes.enabledSites.newValue;
+    enabledSitesCache = Array.isArray(newVal) ? newVal : [];
+    // Re-evaluate menu for current active tab when settings change
+    try {
+      chrome.tabs?.query?.({ active: true, lastFocusedWindow: true }, (tabs) => {
+        if (Array.isArray(tabs) && tabs[0]) updateMenuForTab(tabs[0]);
+      });
+    } catch (_) { /* no-op */ }
+  }
+});
+
+// Helper to update menu based on a given tab
+function updateMenuForTab(tab) {
+  try {
+    const url = tab?.url || '';
+    let hostname = '';
+    try {
+      hostname = url ? new URL(url).hostname : '';
+    } catch (_) {
+      hostname = '';
+    }
+    const isEnabled = hostname && enabledSitesCache.includes(hostname);
+    if (isEnabled) {
+      createLookupMenu();
+    } else {
+      removeLookupMenu();
+    }
+  } catch (_) {
+    removeLookupMenu();
+  }
+}
+
+// On startup, sync menu for the active tab
+try {
+  chrome.tabs?.query?.({ active: true, lastFocusedWindow: true }, (tabs) => {
+    if (Array.isArray(tabs) && tabs[0]) updateMenuForTab(tabs[0]);
+  });
+  chrome.runtime?.onStartup?.addListener?.(() => {
+    chrome.tabs?.query?.({ active: true, lastFocusedWindow: true }, (tabs) => {
+      if (Array.isArray(tabs) && tabs[0]) updateMenuForTab(tabs[0]);
+    });
+  });
+} catch (_) { /* no-op */ }
+
+// Update menu on tab activation and URL changes
+try {
+  chrome.tabs?.onActivated?.addListener?.(({ tabId }) => {
+    chrome.tabs?.get?.(tabId, (tab) => updateMenuForTab(tab));
+  });
+  chrome.tabs?.onUpdated?.addListener?.((tabId, changeInfo, tab) => {
+    if (changeInfo.url || changeInfo.status === 'complete') {
+      updateMenuForTab(tab);
+    }
+  });
+} catch (_) { /* no-op */ }
+
 // Handle context menu clicks
-chrome.contextMenus?.onClicked.addListener((info, tab) => {
-  if (info.menuItemId === 'lexilens-lookup' && info.selectionText && tab?.id) {
+chrome.contextMenus && chrome.contextMenus.onClicked && chrome.contextMenus.onClicked.addListener((info, tab) => {
+  if (info?.menuItemId === MENU_ID && info.selectionText && tab?.id) {
     // Forward selection to the content script to handle UI and lookup
     chrome.tabs.sendMessage(tab.id, {
       type: 'contextLookup',

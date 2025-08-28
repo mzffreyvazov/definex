@@ -53,6 +53,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       handleContextLookup(message.text);
     } catch (e) {
       console.error('Context lookup failed:', e);
+      // Show error in popup if it exists, otherwise just log
+      if (popup) {
+        updatePopupContent(createErrorMessage(
+          'Context Lookup Error',
+          'Failed to process the selected text. Please try selecting the text again.',
+          '🔍'
+        ));
+      }
     }
   }
 });
@@ -65,6 +73,38 @@ let isSentenceMode = false; // Track if current popup is in sentence mode
 // Audio cache for TTS
 const audioCache = new Map();
 const MAX_CACHE_SIZE = 50; // Limit cache to 50 audio files
+
+// Helper function to create consistent error messages
+function createErrorMessage(title, message, icon = '⚠️') {
+  return `
+    <div class="qdp-error" style="
+      padding: 20px; 
+      text-align: center; 
+      font-family: 'Open Sans', sans-serif; 
+      line-height: 1.5;
+      border: 1px solid #ffcdd2;
+      background: linear-gradient(135deg, #ffebee 0%, #fff 100%);
+      border-radius: 8px;
+      color: #333;
+    ">
+      <div style="
+        font-size: 16px; 
+        font-weight: 600; 
+        color: #d32f2f; 
+        margin-bottom: 12px;
+      ">
+        ${icon} ${title}
+      </div>
+      <div style="
+        font-size: 14px; 
+        color: #666;
+        line-height: 1.4;
+      ">
+        ${message}
+      </div>
+    </div>
+  `;
+}
 
 // Function to clean up cache when it gets too large
 function cleanupAudioCache() {
@@ -203,7 +243,11 @@ function handleSelection(event) {
     // Render immediately when response arrives; do not enforce minimum skeleton time
     const showAfter = () => {
         if (chrome.runtime.lastError) {
-          updatePopupContent('Error: Could not connect to the extension.');
+          updatePopupContent(createErrorMessage(
+            'Connection Error',
+            'Cannot communicate with the extension background service. Please try refreshing the page or restarting your browser.',
+            '🔌'
+          ));
           return;
         }
         if (response.status === 'success') {
@@ -225,8 +269,11 @@ function handleSelection(event) {
             <div style="font-size: 14px; color: #666;">${response.message}</div>
           </div>`);
         } else {
-      // Use correct flag for sentence mode
-      updatePopupContent(`Error: ${response.message || (isSentenceLike ? 'Translation failed.' : 'Definition not found.')}`);
+          // Create more informative error messages
+          const errorTitle = isSentenceLike ? 'Translation Error' : 'Definition Error';
+          const errorMessage = response.message || (isSentenceLike ? 'Translation failed.' : 'Definition not found.');
+          
+          updatePopupContent(createErrorMessage(errorTitle, errorMessage));
         }
       };
     // Show results as soon as they're ready (no extra delay)
@@ -274,7 +321,11 @@ function handleContextLookup(selectedText) {
 
   chrome.runtime.sendMessage(payload, (response) => {
     if (chrome.runtime.lastError) {
-      updatePopupContent('Error: Could not connect to the extension.');
+      updatePopupContent(createErrorMessage(
+        'Connection Error',
+        'Cannot communicate with the extension background service. Please try refreshing the page or restarting your browser.',
+        '🔌'
+      ));
       return;
     }
     if (response.status === 'success') {
@@ -296,7 +347,11 @@ function handleContextLookup(selectedText) {
         <div style="font-size: 14px; color: #666;">${response.message}</div>
       </div>`);
     } else {
-      updatePopupContent(`Error: ${response.message || (isSentenceLike ? 'Translation failed.' : 'Definition not found.')}`);
+      // Create more informative error messages
+      const errorTitle = isSentenceLike ? 'Translation Error' : 'Definition Error';
+      const errorMessage = response.message || (isSentenceLike ? 'Translation failed.' : 'Definition not found.');
+      
+      updatePopupContent(createErrorMessage(errorTitle, errorMessage));
     }
   });
 }
@@ -573,6 +628,14 @@ function playAudio(event) {
             cachedAudio.currentTime = 0; // Reset to beginning
             cachedAudio.play().catch(error => {
                 console.error('Cached pronunciation playback failed:', error);
+                // Show user-friendly error message for audio playback failure
+                if (error.name === 'NotAllowedError') {
+                    alert('🔊 Audio playback blocked by browser. Please enable audio autoplay or click the audio button again.');
+                } else if (error.name === 'NotSupportedError') {
+                    alert('🔊 Audio format not supported by your browser. Please try a different browser or update your current one.');
+                } else {
+                    alert('🔊 Audio playback failed. Please check your internet connection and try again.');
+                }
             });
             return;
         }
@@ -591,12 +654,44 @@ function playAudio(event) {
         // Add error handling for audio loading/playback
         audio.addEventListener('error', (e) => {
             console.error('Audio loading/playback error:', e);
+            const errorType = e.target.error?.code;
+            let userMessage = '🔊 Audio playback failed. ';
+            
+            switch (errorType) {
+                case MediaError.MEDIA_ERR_ABORTED:
+                    userMessage += 'Playback was interrupted.';
+                    break;
+                case MediaError.MEDIA_ERR_NETWORK:
+                    userMessage += 'Network error occurred while loading audio.';
+                    break;
+                case MediaError.MEDIA_ERR_DECODE:
+                    userMessage += 'Audio file is corrupted or unsupported.';
+                    break;
+                case MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED:
+                    userMessage += 'Audio format not supported by your browser.';
+                    break;
+                default:
+                    userMessage += 'Please check your internet connection and try again.';
+            }
+            
+            alert(userMessage);
         });
         
         // Start loading the audio and play when ready
         audio.load();
         audio.play().catch(error => {
             console.error('Pronunciation playback failed:', error);
+            // Show user-friendly error message for audio playback failure
+            if (error.name === 'NotAllowedError') {
+                alert('🔊 Audio playback blocked by browser. Please enable audio autoplay for this site or click the audio button again after interacting with the page.');
+            } else if (error.name === 'NotSupportedError') {
+                alert('🔊 Audio format not supported by your browser. Please try a different browser or update your current one.');
+            } else if (error.name === 'AbortError') {
+                // User likely clicked again quickly, no need to show error
+                console.log('Audio playback aborted (likely due to rapid clicking)');
+            } else {
+                alert('🔊 Audio playback failed. Please check your internet connection and try again.');
+            }
         });
     }
 }
@@ -611,6 +706,13 @@ function playTTS(event) {
         
         if (words.length < 2) {
             console.log('TTS is only available for phrases (2+ words), not individual words.');
+            // Show a subtle notification to the user
+            const button = event.currentTarget || event.target;
+            const originalTitle = button.title;
+            button.title = 'TTS is only available for phrases with 2+ words';
+            setTimeout(() => {
+                button.title = originalTitle;
+            }, 3000);
             return;
         }
         
@@ -643,7 +745,17 @@ function playTTS(event) {
         })
             .then(response => {
                 if (!response.ok) {
-                    throw new Error(`TTS request failed: ${response.status} ${response.statusText}`);
+                    if (response.status === 401) {
+                        throw new Error('TTS authentication failed. Please verify your ElevenLabs API key is correct and has not expired.');
+                    } else if (response.status === 403) {
+                        throw new Error('TTS access denied. Your ElevenLabs API key may not have permission to access the TTS service.');
+                    } else if (response.status === 429) {
+                        throw new Error('TTS rate limit exceeded. Please wait a moment and try again, or check your ElevenLabs API quota.');
+                    } else if (response.status >= 500) {
+                        throw new Error('TTS service temporarily unavailable. Please try again later.');
+                    } else {
+                        throw new Error(`TTS request failed (${response.status}). Please check your internet connection and try again.`);
+                    }
                 }
                 return response.blob();
             })
@@ -659,16 +771,56 @@ function playTTS(event) {
                 
                 // Add error handling for audio playback
                 audio.addEventListener('error', (e) => {
-                    console.error('Audio playback error:', e);
+                    console.error('TTS Audio playback error:', e);
+                    const errorType = e.target.error?.code;
+                    let userMessage = '🔊 Text-to-speech playback failed. ';
+                    
+                    switch (errorType) {
+                        case MediaError.MEDIA_ERR_ABORTED:
+                            userMessage += 'Playback was interrupted.';
+                            break;
+                        case MediaError.MEDIA_ERR_NETWORK:
+                            userMessage += 'Network error occurred while playing TTS audio.';
+                            break;
+                        case MediaError.MEDIA_ERR_DECODE:
+                            userMessage += 'TTS audio file is corrupted.';
+                            break;
+                        case MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED:
+                            userMessage += 'TTS audio format not supported by your browser.';
+                            break;
+                        default:
+                            userMessage += 'Please try again.';
+                    }
+                    
+                    alert(userMessage);
                 });
                 
                 // Play the audio
                 audio.play().catch(error => {
                     console.error('TTS playback failed:', error);
+                    if (error.name === 'NotAllowedError') {
+                        alert('🔊 Text-to-speech playback blocked by browser. Please enable audio autoplay for this site or click the TTS button again after interacting with the page.');
+                    } else if (error.name === 'NotSupportedError') {
+                        alert('🔊 TTS audio format not supported by your browser. Please try a different browser.');
+                    } else {
+                        alert('🔊 Text-to-speech playback failed. Please try again.');
+                    }
                 });
             })
             .catch(error => {
                 console.error('TTS fetch failed:', error);
+                // Provide specific error messages based on error type
+                let userMessage = error.message;
+                if (!userMessage.includes('TTS')) {
+                    if (error.message.includes('fetch') || error.message.includes('network')) {
+                        userMessage = '🔊 TTS service unavailable. Please check your internet connection and try again.';
+                    } else if (error.message.includes('API key')) {
+                        userMessage = `🔊 ${error.message}`;
+                    } else {
+                        userMessage = '🔊 Text-to-speech failed. Please try again or check your TTS settings.';
+                    }
+                }
+                alert(userMessage);
             });
     }
 }
@@ -748,6 +900,7 @@ function saveWord(event) {
             
         } catch (error) {
             console.error('Error saving word:', error);
+            alert('📝 Failed to save word: Unable to parse word data. Please try selecting the word again.');
         }
     } else if (sentenceData) {
         if (isAlreadySaved) {

@@ -3,7 +3,29 @@
  * Quick Definition - Background Service Worker
  * =================================================================================
  * This script handles all API communication and data processing.
- * 1. Listens for requests from the content script.
+ * 1. List            apiPromise = fetch(geminiUrl, fetchOpts)
+              .then(res => {
+                if (!res.ok) {
+                  if (res.status === 401) {
+                    throw new Error(`Gemini API authentication failed. Please verify your API key is correct and has not expired.`);
+                  } else if (res.status === 403) {
+                    throw new Error(`Gemini API access denied. Your API key may not have permission to access this service.`);
+                  } else if (res.status === 429) {
+                    throw new Error(`Gemini API rate limit exceeded. Please wait a moment and try again, or check your API quota.`);
+                  } else if (res.status >= 500) {
+                    throw new Error(`Gemini API server error (${res.status}). The service is temporarily unavailable, please try again later.`);
+                  } else {
+                    throw new Error(`Gemini API request failed with status ${res.status}: ${res.statusText}. Please check your internet connection and try again.`);
+                  }
+                }
+                return res.json();
+              })
+              .then(data => {
+                if (data.error) {
+                  throw new Error(`Gemini AI error: ${data.error}. Please try a different word or check your API configuration.`);
+                }
+                return data;
+              }),sts from the content script.
  * 2. Checks user settings to determine the dictionary source and display preferences.
  * 3. Fetches data from the appropriate API.
  * 4. Normalizes the data into a single, consistent format.
@@ -262,20 +284,33 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           apiPromise = fetch(geminiUrl, fetchOpts)
             .then(res => {
               if (!res.ok) {
-                throw new Error(`Gemini API returned ${res.status}: ${res.statusText}`);
+                if (res.status === 401) {
+                  throw new Error(`Gemini API authentication failed. Please verify your API key is correct and has not expired.`);
+                } else if (res.status === 403) {
+                  throw new Error(`Gemini API access denied. Your API key may not have permission to access this service.`);
+                } else if (res.status === 429) {
+                  throw new Error(`Gemini API rate limit exceeded. Please wait a moment and try again, or check your API quota.`);
+                } else if (res.status >= 500) {
+                  throw new Error(`Gemini API server error (${res.status}). The service is temporarily unavailable, please try again later.`);
+                } else {
+                  throw new Error(`Gemini API request failed with status ${res.status}: ${res.statusText}. Please check your internet connection and try again.`);
+                }
               }
               return res.json();
             })
             .then(data => {
               if (data.error) {
-                throw new Error(data.error);
+                throw new Error(`Gemini AI error: ${data.error}. Please try a different word or check your API configuration.`);
               }
               return normalizeGeminiData(data);
             });
         } else if (source === 'gemini') {
           // --- REQUIRE geminiApiKey ---
           if (!geminiKey || !geminiKey.trim()) {
-            sendResponse({ status: 'error', message: 'Gemini API key is not set.' });
+            sendResponse({ 
+              status: 'error', 
+              message: 'Gemini AI is selected as your preferred source, but no API key is configured. Please add your Gemini API key in the extension options to use AI-powered definitions and translations.' 
+            });
             return;
           }
 
@@ -307,17 +342,33 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
               fetch(geminiUrl, fetchOpts)
                 .then(res => {
                   if (!res.ok) {
-                    throw new Error(`Gemini API returned ${res.status}: ${res.statusText}`);
+                    if (res.status === 401) {
+                      throw new Error(`Gemini API authentication failed. Please verify your API key is correct and has not expired.`);
+                    } else if (res.status === 403) {
+                      throw new Error(`Gemini API access denied. Your API key may not have permission to access this service.`);
+                    } else if (res.status === 429) {
+                      throw new Error(`Gemini API rate limit exceeded. Please wait a moment and try again, or check your API quota.`);
+                    } else if (res.status >= 500) {
+                      throw new Error(`Gemini API server error (${res.status}). The service is temporarily unavailable, please try again later.`);
+                    } else {
+                      throw new Error(`Gemini API request failed with status ${res.status}: ${res.statusText}. Please check your internet connection and try again.`);
+                    }
                   }
                   return res.json();
                 })
                 .then(data => {
                   if (data.error) {
-                    throw new Error(data.error);
+                    throw new Error(`Gemini AI error: ${data.error}. Please try a different word or check your API configuration.`);
                   }
                   return data;
                 }),
-              fetch(cambridgeUrl).then(res => res.json().catch(() => null))
+              fetch(cambridgeUrl).then(res => {
+                if (!res.ok) {
+                  console.warn(`Cambridge Dictionary API returned ${res.status}: ${res.statusText}`);
+                  return res.json().catch(() => null);
+                }
+                return res.json().catch(() => null);
+              })
             ]).then(([geminiData, cambridgeData]) => {
               const normalized = normalizeGeminiData(geminiData);
               if (normalized && cambridgeData?.pronunciation?.length) {
@@ -333,21 +384,63 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
         } else if (source === 'merriam-webster') {
           if (!mwApiKey) {
-            sendResponse({ status: 'error', message: 'Merriam-Webster API key is not set.' });
+            sendResponse({ 
+              status: 'error', 
+              message: 'Merriam-Webster Dictionary is selected as your preferred source, but no API key is configured. Please add your Merriam-Webster API key in the extension options or switch to a different dictionary source.' 
+            });
             return;
           }
           const apiUrl = API_URLS.merriamWebster(word, mwApiKey);
           apiPromise = fetch(apiUrl)
-            .then(res => res.json())
-            .then(data => normalizeMwData(data));
+            .then(res => {
+              if (!res.ok) {
+                if (res.status === 401) {
+                  throw new Error(`Merriam-Webster API authentication failed. Please verify your API key is correct and has not expired.`);
+                } else if (res.status === 403) {
+                  throw new Error(`Merriam-Webster API access denied. Your API key may not have permission to access this service.`);
+                } else if (res.status === 429) {
+                  throw new Error(`Merriam-Webster API rate limit exceeded. Please wait a moment and try again, or check your API quota.`);
+                } else if (res.status >= 500) {
+                  throw new Error(`Merriam-Webster API server error (${res.status}). The service is temporarily unavailable, please try again later.`);
+                } else {
+                  throw new Error(`Merriam-Webster API request failed with status ${res.status}: ${res.statusText}. Please check your internet connection and try again.`);
+                }
+              }
+              return res.json();
+            })
+            .then(data => {
+              if (Array.isArray(data) && data.length === 0) {
+                throw new Error(`Word "${word}" not found in Merriam-Webster Dictionary. Please check the spelling or try a different dictionary source.`);
+              }
+              return normalizeMwData(data);
+            });
         } else {
           const apiUrl = API_URLS.dictionary(word);
-          apiPromise = fetch(apiUrl).then(res => res.json());
+          apiPromise = fetch(apiUrl)
+            .then(res => {
+              if (!res.ok) {
+                if (res.status === 404) {
+                  if (word.length == 1) {
+                    throw new Error(`Word "${word}" not found in Cambridge Dictionary. Please check the spelling or try a different word.`);
+                  } else if (word.length > 1) {
+                    throw new Error(`Phrase "${word}" not found in Cambridge Dictionary. Please consider using Gemini as the source.`);
+                  }
+                } else if (res.status >= 500) {
+                  throw new Error(`Cambridge Dictionary API server error (${res.status}). The service is temporarily unavailable, please try again later.`);
+                } else {
+                  throw new Error(`Cambridge Dictionary API request failed with status ${res.status}: ${res.statusText}. Please check your internet connection and try again.`);
+                }
+              }
+              return res.json();
+            });
         }
 
         apiPromise.then(fullData => {
           if (!fullData || !fullData.word) {
-            throw new Error('Definition not found or API returned invalid format.');
+            const errorMsg = isPhrase ? 
+              `Unable to find definition for the phrase "${word}". This might be a specialized term or proper noun. Try selecting individual words instead.` :
+              `Unable to find definition for "${word}". Please check the spelling, or the word might not be in the selected dictionary source.`;
+            throw new Error(errorMsg);
           }
           
           const finalData = applyDisplayPreferences(fullData, settings);
@@ -403,7 +496,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       
       // Ensure Gemini API key is available for translation endpoint
       if (!geminiKey || !geminiKey.trim()) {
-        sendResponse({ status: 'error', message: 'Gemini API key is not set.' });
+        sendResponse({ 
+          status: 'error', 
+          message: 'Translation requires Gemini AI, but no API key is configured. Please add your Gemini API key in the extension options to enable translation features.' 
+        });
         return;
       }
       
@@ -426,10 +522,31 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         const translateUrl = API_URLS.translate(sentence, langParam);
 
         fetch(translateUrl, { headers: { 'x-api-key': geminiKey.trim() } })
-          .then(res => res.json())
+          .then(res => {
+            if (!res.ok) {
+              if (res.status === 401) {
+                throw new Error(`Translation failed: Gemini API authentication failed. Please verify your API key is correct and has not expired.`);
+              } else if (res.status === 403) {
+                throw new Error(`Translation failed: Gemini API access denied. Your API key may not have permission to access the translation service.`);
+              } else if (res.status === 429) {
+                throw new Error(`Translation failed: Gemini API rate limit exceeded. Please wait a moment and try again, or check your API quota.`);
+              } else if (res.status >= 500) {
+                throw new Error(`Translation failed: Gemini API server error (${res.status}). The translation service is temporarily unavailable, please try again later.`);
+              } else {
+                throw new Error(`Translation failed: API request returned status ${res.status}: ${res.statusText}. Please check your internet connection and try again.`);
+              }
+            }
+            return res.json();
+          })
           .then(data => {
             if (data.error) {
-              throw new Error(data.error);
+              if (data.error.includes('language')) {
+                throw new Error(`Translation failed: The target language "${targetLanguage}" is not supported or invalid. Please select a different target language in the options.`);
+              } else if (data.error.includes('quota') || data.error.includes('limit')) {
+                throw new Error(`Translation failed: API quota exceeded. Please check your Gemini API usage limits and try again later.`);
+              } else {
+                throw new Error(`Translation failed: ${data.error}. Please try again or select a different target language.`);
+              }
             }
             
             chrome.storage.local.set({ [cacheKey]: data });
@@ -437,7 +554,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           })
           .catch(error => {
             console.error(`Translation Error for sentence:`, error);
-            sendResponse({ status: 'error', message: error.message });
+            // Provide more specific error messages based on error type
+            let userMessage = error.message;
+            if (error.message.includes('fetch')) {
+              userMessage = `Translation failed: Unable to connect to the translation service. Please check your internet connection and try again.`;
+            } else if (error.message.includes('JSON')) {
+              userMessage = `Translation failed: Invalid response from translation service. Please try again with a different sentence.`;
+            } else if (!error.message.startsWith('Translation failed:')) {
+              userMessage = `Translation failed: ${error.message}. Please try again or check your API configuration.`;
+            }
+            sendResponse({ status: 'error', message: userMessage });
           });
       });
     });
@@ -484,7 +610,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'unsaveWord') {
     const { text, type } = message.data || {};
     if (!text || !type) {
-      sendResponse?.({ status: 'error', message: 'Invalid unsave payload.' });
+      sendResponse?.({ 
+        status: 'error', 
+        message: 'Unable to save word: Invalid data provided. Please try again.' 
+      });
       return true;
     }
     chrome.storage.local.get(['savedWords'], (result) => {

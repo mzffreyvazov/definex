@@ -92,6 +92,32 @@
   min-width: 500px;
 }
 
+/* Error message styles */
+.qdp-error {
+  padding: 20px !important;
+  text-align: center !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+  line-height: 1.5 !important;
+  border: 1px solid #ffcdd2 !important;
+  background: linear-gradient(135deg, #ffebee 0%, #fff 100%) !important;
+  border-radius: 8px !important;
+  color: #333 !important;
+  margin: 0 !important;
+}
+
+.qdp-error > div:first-child {
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  color: #d32f2f !important;
+  margin-bottom: 12px !important;
+}
+
+.qdp-error > div:last-child {
+  font-size: 14px !important;
+  color: #666 !important;
+  line-height: 1.4 !important;
+}
+
 .qdp-header {
   display: flex;
   align-items: flex-start;

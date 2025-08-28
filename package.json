@@ -1,4 +1,5 @@
 {
+  "name": "definex",
   "dependencies": {
     "@google/genai": "^1.10.0",
     "@google/generative-ai": "^0.24.1",

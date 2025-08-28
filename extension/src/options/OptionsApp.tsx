@@ -776,7 +776,15 @@ export function OptionsApp() {
                             onChange={e => setGeminiApiKey(e.target.value)}
                           />
                           <div style={{ fontSize: 13, color: '#64748b', marginTop: 8 }}>
-                            Enter your Gemini AI API key provided by your AI service.
+                            Get your free API key from{' '}
+                            <a
+                              href="https://aistudio.google.com/apikey"
+                              target="_blank"
+                              rel="noreferrer"
+                              style={{ color: '#3b82f6' }}
+                            >
+                              aistudio.google.com
+                            </a>. 
                           </div>
                         </div>
                       </div>
@@ -1228,7 +1236,7 @@ export function OptionsApp() {
                   <h3>DefineX Dictionary Extension</h3>
                 </div>
                 <div style={{ padding: 24 }}>
-                  <p><strong>Version:</strong> 1.0.0</p>
+                  <p><strong>Version:</strong> 1.0.1</p>
                   <p style={{ marginTop: 12 }}><strong>Description:</strong> A powerful dictionary and translation tool that helps you understand words and phrases while browsing the web.</p>
                   <h4 style={{ marginTop: 24, marginBottom: 12, color: '#1e293b' }}>Features:</h4>
                   <ul style={{ marginLeft: 20, color: '#64748b', lineHeight: 1.6 }}>

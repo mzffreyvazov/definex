@@ -217,7 +217,7 @@
 /* Translation header styles */
 .qdp-translation-header {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   gap: 8px;
   background-color: #f8f9fa;
   padding: 8px 12px;
@@ -232,12 +232,14 @@
   color: #007acc;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  line-height: 1.2;
 }
 
 .qdp-word-translation {
   font-size: 16px;
   font-weight: 500;
   color: #333;
+  line-height: 1.2;
 }
 
 /* Definition translation styles */

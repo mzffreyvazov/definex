@@ -1,6 +1,6 @@
 {
   "name": "definex-extension",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Definex browser extension build (React + Vite)",
   "main": "background.js",
   "scripts": {

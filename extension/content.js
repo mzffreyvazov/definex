@@ -1,6 +1,31 @@
 // Import API configuration
 import { API_URLS } from './config/api-config.js';
 
+// Variable to track if we're in a right-click context
+let isRightClickInProgress = false;
+
+// Function to prevent selection clearing during right-clicks
+function preventSelectionClear(event) {
+    // Check if this is a right-click (button 2) or if we're in a right-click context
+    if (event.button === 2 || isRightClickInProgress) {
+        const selection = window.getSelection();
+        
+        // Only prevent default if there's an active selection
+        if (selection && selection.toString().trim().length > 0) {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            // Set flag to indicate right-click is in progress
+            isRightClickInProgress = true;
+            
+            // Clear the flag after a short delay to handle the context menu
+            setTimeout(() => {
+                isRightClickInProgress = false;
+            }, 100);
+        }
+    }
+}
+
 // Check if extension is enabled for this site before setting up event listeners
 chrome.storage.local.get('enabledSites', (data) => {
     const enabledSites = data.enabledSites || [];
@@ -9,6 +34,7 @@ chrome.storage.local.get('enabledSites', (data) => {
     if (enabledSites.includes(currentSite)) {
         // Only add event listeners if the site is enabled
         document.addEventListener('dblclick', handleSelection);
+        document.addEventListener('mousedown', preventSelectionClear, true);
         window.addEventListener('scroll', updatePopupPosition, { passive: true });
         window.addEventListener('resize', updatePopupPosition, { passive: true });
         document.addEventListener('click', (event) => {
@@ -25,6 +51,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (message.enabled) {
             // Enable the extension on this site
             document.addEventListener('dblclick', handleSelection);
+            document.addEventListener('mousedown', preventSelectionClear, true);
             window.addEventListener('scroll', updatePopupPosition, { passive: true });
             window.addEventListener('resize', updatePopupPosition, { passive: true });
             document.addEventListener('click', (event) => {
@@ -35,6 +62,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         } else {
             // Disable the extension on this site
             document.removeEventListener('dblclick', handleSelection);
+            document.removeEventListener('mousedown', preventSelectionClear, true);
             window.removeEventListener('scroll', updatePopupPosition);
             window.removeEventListener('resize', updatePopupPosition);
             document.removeEventListener('click', (event) => {

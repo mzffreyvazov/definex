@@ -895,32 +895,65 @@ function saveWord(event) {
         // Handle word/phrase saving
         try {
             const data = JSON.parse(wordData);
-            const saveData = {
-                id: Date.now() + Math.random(), // Unique ID
-                text: data.word,
-                type: data.word.split(/\s+/).length > 1 ? 'phrase' : 'word',
-                partOfSpeech: data.pos ? data.pos.join(', ') : '',
-                definitions: data.definition.map(def => ({
-                    text: def.text,
-                    translation: def.translation || null,
-                    examples: def.example.map(ex => ({
-                        text: ex.text,
-                        translation: ex.translation || null
-                    }))
-                })),
-                translation: data.translation || null,
-                pronunciation: data.pronunciation && data.pronunciation[0] ? data.pronunciation[0].pron : '',
-                audioUrl: data.pronunciation && data.pronunciation[0] ? data.pronunciation[0].url : '',
-                savedAt: new Date().toISOString()
-            };
-            
-            // Send to background script to save
-            chrome.runtime.sendMessage({
-                type: 'saveWord',
-                data: saveData
+            console.log('Save data parsed:', data);
+            console.log('Definitions array:', data.definition);
+            const isPhrase = data.word.split(/\s+/).length > 1;
+
+            // Save exactly what's displayed: one entry per definition/part of speech
+            const entriesToSave = (data.definition || []).map((def) => {
+                console.log('Processing definition:', def);
+                return {
+                    id: Date.now() + Math.random(),
+                    text: data.word,
+                    type: isPhrase ? 'phrase' : 'word',
+                    partOfSpeech: def.pos || '', // single POS
+                    definitions: [{
+                        text: def.text,
+                        translation: def.translation || null,
+                        examples: (def.example || []).map(ex => ({
+                            text: ex.text,
+                            translation: ex.translation || null
+                        }))
+                    }],
+                    translation: data.translation || null,
+                    pronunciation: data.pronunciation && data.pronunciation[0] ? data.pronunciation[0].pron : '',
+                    audioUrl: data.pronunciation && data.pronunciation[0] ? data.pronunciation[0].url : '',
+                    savedAt: new Date().toISOString()
+                };
             });
-            
-            // Update button to show saved state with filled bookmark icon
+
+            console.log('Entries to save:', entriesToSave);
+
+            // Fallback: if definitions array is empty, save a minimal single entry
+            if (!entriesToSave.length) {
+                console.log('No definitions found, creating fallback entry');
+                entriesToSave.push({
+                    id: Date.now() + Math.random(),
+                    text: data.word,
+                    type: isPhrase ? 'phrase' : 'word',
+                    partOfSpeech: (data.pos && data.pos[0]) ? data.pos[0] : '',
+                    definitions: [],
+                    translation: data.translation || null,
+                    pronunciation: data.pronunciation && data.pronunciation[0] ? data.pronunciation[0].pron : '',
+                    audioUrl: data.pronunciation && data.pronunciation[0] ? data.pronunciation[0].url : '',
+                    savedAt: new Date().toISOString()
+                });
+            }
+
+            console.log(`Saving ${entriesToSave.length} entries`);
+            // Send all entries with slight delay to ensure unique timestamps and avoid race conditions
+            entriesToSave.forEach((entry, index) => {
+                setTimeout(() => {
+                    // Ensure unique ID and timestamp for each entry
+                    entry.id = Date.now() + Math.random() + index;
+                    entry.savedAt = new Date().toISOString();
+                    console.log(`Sending entry ${index + 1}:`, entry);
+                    chrome.runtime.sendMessage({
+                        type: 'saveWord',
+                        data: entry
+                    });
+                }, index * 10); // 10ms delay between each save
+            });            // Update button to show saved state with filled bookmark icon
             button.innerHTML = `<svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3.5 2C3.22386 2 3 2.22386 3 2.5V13.5C3 13.6818 3.09864 13.8492 3.25762 13.9373C3.41659 14.0254 3.61087 14.0203 3.765 13.924L7.5 11.5896L11.235 13.924C11.3891 14.0203 11.5834 14.0254 11.7424 13.9373C11.9014 13.8492 12 13.6818 12 13.5V2.5C12 2.22386 11.7761 2 11.5 2H3.5Z" fill="currentColor" fill-rule="evenodd" clip-rule="evenodd"></path></svg>`;
             button.title = 'Saved!';
             button.setAttribute('aria-pressed', 'true');

@@ -572,34 +572,51 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
   
   if (message.type === 'saveWord') {
-    const wordData = message.data;
-    
+    const wordData = message.data || {};
+    const text = (wordData.text || '').toString();
+    const type = wordData.type || '';
+    const pos = (wordData.partOfSpeech || '').toString();
+
+    console.log('Background received saveWord:', { text, type, pos });
+
+    if (!text || !type) {
+      sendResponse?.({ status: 'error', message: 'Invalid data provided.' });
+      return true;
+    }
+
     chrome.storage.local.get(['savedWords'], (result) => {
       const savedWords = result.savedWords || [];
-      
-      // Check if word already exists (avoid duplicates)
-      const existingWordIndex = savedWords.findIndex(word => 
-        word.text.toLowerCase() === wordData.text.toLowerCase() && 
-        word.type === wordData.type
-      );
-      
-      if (existingWordIndex === -1) {
-        // Add new word
-        savedWords.unshift(wordData); // Add to beginning of array
-        
-        // Limit to 1000 saved words to prevent storage issues
-        if (savedWords.length > 1000) {
-          savedWords.splice(1000);
+      console.log('Current saved words count:', savedWords.length);
+
+      // De-duplicate by text + type + partOfSpeech
+      const existingIndex = savedWords.findIndex(w => {
+        const match = (
+          (w.text || '').toLowerCase() === text.toLowerCase() &&
+          (w.type || '') === type &&
+          ((w.partOfSpeech || '') === pos)
+        );
+        if (match) {
+          console.log('Found existing entry:', w);
         }
-        
-        chrome.storage.local.set({ savedWords: savedWords }, () => {
-          console.log('Word saved successfully:', wordData.text);
+        return match;
+      });
+
+      console.log('Existing index:', existingIndex);
+
+      if (existingIndex === -1) {
+        savedWords.unshift(wordData);
+        if (savedWords.length > 1000) savedWords.splice(1000);
+        console.log('Adding new word to position 0, new count:', savedWords.length);
+        chrome.storage.local.set({ savedWords }, () => {
+          console.log('Word saved:', text, pos ? `(${pos})` : '');
+          sendResponse?.({ status: 'success' });
         });
       } else {
-        // Update existing word with new data
-        savedWords[existingWordIndex] = { ...savedWords[existingWordIndex], ...wordData };
-        chrome.storage.local.set({ savedWords: savedWords }, () => {
-          console.log('Word updated successfully:', wordData.text);
+        savedWords[existingIndex] = { ...savedWords[existingIndex], ...wordData };
+        console.log('Updated existing word at index:', existingIndex);
+        chrome.storage.local.set({ savedWords }, () => {
+          console.log('Word updated:', text, pos ? `(${pos})` : '');
+          sendResponse?.({ status: 'success' });
         });
       }
     });
@@ -608,7 +625,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message.type === 'unsaveWord') {
-    const { text, type } = message.data || {};
+    const { text, type, partOfSpeech } = message.data || {};
     if (!text || !type) {
       sendResponse?.({ 
         status: 'error', 
@@ -618,9 +635,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
     chrome.storage.local.get(['savedWords'], (result) => {
       const savedWords = result.savedWords || [];
-      const newList = savedWords.filter(
-        (w) => !(w.text?.toLowerCase() === text.toLowerCase() && w.type === type)
-      );
+      const newList = savedWords.filter((w) => {
+        const sameText = (w.text || '').toLowerCase() === text.toLowerCase();
+        const sameType = (w.type || '') === type;
+        if (partOfSpeech !== undefined) {
+          const samePos = (w.partOfSpeech || '') === (partOfSpeech || '');
+          return !(sameText && sameType && samePos);
+        }
+        return !(sameText && sameType);
+      });
       chrome.storage.local.set({ savedWords: newList }, () => {
         console.log('Word unsaved successfully:', text);
         sendResponse?.({ status: 'success' });

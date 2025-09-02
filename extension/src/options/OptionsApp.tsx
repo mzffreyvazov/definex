@@ -34,6 +34,13 @@ const DownloadIcon = ({ size = 16, ...props }) => (
     <line x1="12" y1="15" x2="12" y2="3"></line>
   </svg>
 );
+
+const CopyIcon = ({ size = 16, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+  </svg>
+);
 // --- End Helper Icons ---
 
 
@@ -564,6 +571,84 @@ export function OptionsApp() {
       exportAsCSV(selectedData);
   }
 
+  function copySelectedAsCSV() {
+    const selectedData = savedWords.filter(word => selectedWords.has(word.id));
+    if (selectedData.length === 0) {
+      showStatus('No words selected to copy', 'warning');
+      return;
+    }
+
+    const header = 'Type,Text,Pronunciation,Part of Speech,Definition,Translation,Examples,Audio URL,Saved Date\n';
+    const escapeCSV = (str: any) => {
+      if (!str) return '""';
+      const clean = String(str).replace(/"/g, '""');
+      return `"${clean}"`;
+    };
+
+    const rows = selectedData.map((item: SavedWord) => {
+      const type = item.type || 'unknown';
+      const text = item.text || '';
+      const pronunciation = item.pronunciation || '';
+      const pos = item.partOfSpeech || '';
+      let definitions = '';
+      let examples = '';
+      let translations = '';
+
+      if (item.definitions && Array.isArray(item.definitions)) {
+        definitions = item.definitions.map((d: any) => d.text || '').join(' | ');
+        examples = item.definitions.map((d: any) => 
+          d.examples && Array.isArray(d.examples) ? d.examples.map((e: any) => e.text || '').join('; ') : ''
+        ).filter(Boolean).join(' | ');
+        translations = item.definitions.map((d: any) => d.translation || '').filter(Boolean).join(' | ');
+      }
+
+      if (item.translation && !translations) {
+        translations = item.translation;
+      }
+
+      const audioUrl = item.audioUrl || '';
+      const date = item.savedAt ? new Date(item.savedAt).toLocaleDateString() : '';
+
+      return [
+        escapeCSV(type),
+        escapeCSV(text),
+        escapeCSV(pronunciation),
+        escapeCSV(pos),
+        escapeCSV(definitions),
+        escapeCSV(translations),
+        escapeCSV(examples),
+        escapeCSV(audioUrl),
+        escapeCSV(date)
+      ].join(',');
+    });
+
+    const csvContent = header + rows.join('\n');
+    
+    navigator.clipboard.writeText(csvContent).then(() => {
+      showStatus(`Successfully copied ${selectedData.length} items as CSV to clipboard`, 'success');
+    }).catch(err => {
+      console.error('Failed to copy CSV to clipboard:', err);
+      showStatus('Failed to copy CSV to clipboard', 'error');
+    });
+  }
+
+  function copySelectedAsJSON() {
+    const selectedData = savedWords.filter(word => selectedWords.has(word.id));
+    if (selectedData.length === 0) {
+      showStatus('No words selected to copy', 'warning');
+      return;
+    }
+
+    const jsonContent = JSON.stringify(selectedData, null, 2);
+    
+    navigator.clipboard.writeText(jsonContent).then(() => {
+      showStatus(`Successfully copied ${selectedData.length} items as JSON to clipboard`, 'success');
+    }).catch(err => {
+      console.error('Failed to copy JSON to clipboard:', err);
+      showStatus('Failed to copy JSON to clipboard', 'error');
+    });
+  }
+
   function exportAsJSON() {
     chrome.storage.local.get(['savedWords'], result => {
       const saved = result.savedWords || [];
@@ -1013,9 +1098,17 @@ export function OptionsApp() {
                   <div className="action-toolbar-row">
                     <div className="action-toolbar">
                       <span className="action-toolbar-label">{selectedWords.size} selected</span>
-                      <button onClick={exportSelectedCSV} className="action-toolbar-btn" title="Export Selected">
+                      <button onClick={exportSelectedCSV} className="action-toolbar-btn" title="Export Selected as CSV file">
                         <DownloadIcon size={14} />
                         Export
+                      </button>
+                      <button onClick={copySelectedAsCSV} className="action-toolbar-btn" title="Copy Selected as CSV">
+                        <CopyIcon size={14} />
+                        Copy as CSV
+                      </button>
+                      <button onClick={copySelectedAsJSON} className="action-toolbar-btn" title="Copy Selected as JSON">
+                        <CopyIcon size={14} />
+                        Copy as JSON
                       </button>
                       <button onClick={deleteSelectedWords} className="action-toolbar-btn delete" title="Delete Selected">
                         <TrashIcon size={14} />

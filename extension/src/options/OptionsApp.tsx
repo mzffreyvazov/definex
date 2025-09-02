@@ -753,7 +753,12 @@ export function OptionsApp() {
                             value={mwApiKey}
                             onFocus={() => setMwApiKey((window as any)._orig_mw || '')}
                             onBlur={() => setMwApiKey(mwApiKey ? maskApiKey(unmaskApiKey(mwApiKey, (window as any)._orig_mw || '')) : '')}
-                            onChange={e => setMwApiKey(e.target.value)}
+                            onChange={e => {
+                              const newValue = e.target.value;
+                              setMwApiKey(newValue);
+                              // Update the original value when user types
+                              (window as any)._orig_mw = newValue;
+                            }}
                           />
                           <div style={{ fontSize: 13, color: '#64748b', marginTop: 8 }}>
                             Get your free API key from <a href="https://dictionaryapi.com/" target="_blank" rel="noreferrer" style={{ color: '#3b82f6' }}>dictionaryapi.com</a>.
@@ -773,7 +778,12 @@ export function OptionsApp() {
                             value={geminiApiKey}
                             onFocus={() => setGeminiApiKey((window as any)._orig_gem || '')}
                             onBlur={() => setGeminiApiKey(geminiApiKey ? maskApiKey(unmaskApiKey(geminiApiKey, (window as any)._orig_gem || '')) : '')}
-                            onChange={e => setGeminiApiKey(e.target.value)}
+                            onChange={e => {
+                              const newValue = e.target.value;
+                              setGeminiApiKey(newValue);
+                              // Update the original value when user types
+                              (window as any)._orig_gem = newValue;
+                            }}
                           />
                           <div style={{ fontSize: 13, color: '#64748b', marginTop: 8 }}>
                             Get your free API key from{' '}
@@ -934,7 +944,12 @@ export function OptionsApp() {
                             value={elevenlabsApiKey}
                             onFocus={() => setElevenlabsApiKey((window as any)._orig_el || '')}
                             onBlur={() => setElevenlabsApiKey(elevenlabsApiKey ? maskApiKey(unmaskApiKey(elevenlabsApiKey, (window as any)._orig_el || '')) : '')}
-                            onChange={e => setElevenlabsApiKey(e.target.value)}
+                            onChange={e => {
+                              const newValue = e.target.value;
+                              setElevenlabsApiKey(newValue);
+                              // Update the original value when user types
+                              (window as any)._orig_el = newValue;
+                            }}
                           />
                           <div style={{ fontSize: 13, color: '#64748b', marginTop: 8 }}>
                             Get your API key from <a href="https://elevenlabs.io/" target="_blank" rel="noreferrer" style={{ color: '#3b82f6' }}>elevenlabs.io</a> to enable high-quality text-to-speech.

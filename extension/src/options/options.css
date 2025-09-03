@@ -16,6 +16,7 @@ body {
 .app-container {
   display: flex;
   height: 100vh;
+  overflow: visible;
 }
 
 /* Sidebar Styles */
@@ -26,22 +27,52 @@ body {
   display: flex;
   flex-direction: column;
   box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: visible;
+  position: relative;
+}
+
+.sidebar.collapsed {
+  width: 70px;
 }
 
 .sidebar-header {
   padding: 20px 20px;
+  position: relative;
+  overflow: visible;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.sidebar-header:hover {
+  background-color: #f8fafc;
 }
 
 .brand-container {
   display: flex;
   align-items: center;
   gap: 12px;
+  transition: gap 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+}
+
+.sidebar.collapsed .brand-container {
+  gap: 0;
+}
+
+.sidebar.collapsed .brand-container h1 {
+  opacity: 0;
+  overflow: hidden;
+  width: 0;
+  margin: 0;
 }
 
 .brand-logo {
   width: 28px;
   height: 28px;
   object-fit: contain;
+  flex-shrink: 0;
+  position: relative;
 }
 
 .sidebar-header h1 {
@@ -49,6 +80,8 @@ body {
   font-weight: 600;
   color: #1e293b;
   margin: 0;
+  white-space: nowrap;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .sidebar-header p {
@@ -67,13 +100,27 @@ body {
   padding: 12px 20px;
   color: #64748b;
   text-decoration: none;
-  transition: all 0.2s;
+  transition: padding 0.4s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s;
   cursor: pointer;
   border: none;
   background: none;
   width: 100%;
   text-align: left;
   font-size: 15px;
+  position: relative;
+  white-space: nowrap;
+}
+
+.sidebar.collapsed .nav-item {
+  padding: 12px 25px;
+  justify-content: flex-start;
+}
+
+.sidebar.collapsed .nav-item .nav-item-text {
+  opacity: 0;
+  overflow: hidden;
+  width: 0;
+  margin-left: 0;
 }
 
 .nav-item:hover {
@@ -93,6 +140,74 @@ body {
   height: 20px;
   margin-right: 12px;
   stroke-width: 2;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.sidebar.collapsed .nav-item-icon {
+  margin-right: 0;
+}
+
+.nav-item-text {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Tooltip for collapsed nav items */
+.sidebar.collapsed .nav-item {
+  position: relative;
+}
+
+.sidebar.collapsed .nav-item:hover::before {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 65px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #374151;
+  color: white;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 400;
+  white-space: nowrap;
+  opacity: 1;
+  pointer-events: none;
+  z-index: 1000;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  animation: tooltipFadeIn 0.2s ease-out;
+}
+
+.sidebar.collapsed .nav-item:hover::after {
+  content: '';
+  position: absolute;
+  left: 59px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  border-right: 6px solid #374151;
+  z-index: 1001;
+  animation: tooltipFadeIn 0.2s ease-out;
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-50%) translateX(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+  }
+}
+
+.sidebar.collapsed .nav-item.active {
+  background-color: #eff6ff;
+  color: #3b82f6;
+  border-right: 3px solid #3b82f6;
+  font-weight: 500;
 }
 
 /* Main Content Styles */
@@ -262,8 +377,7 @@ select:focus, input:focus, .SelectTrigger:focus {
 }
 
 /* Action Toolbar */
-.action-toolbar {
-  display: inline-flex;
+.action-toolbar {  display: inline-flex;
   align-items: center;
   gap: 6px;
   background-color: #ffffff;

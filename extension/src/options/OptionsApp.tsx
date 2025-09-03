@@ -200,6 +200,7 @@ function FilterPanel({ column, values, selectedValues, onToggleFilter, onClearAl
 export function OptionsApp() {
   const [activeSection, setActiveSection] = useState<'settings' | 'saved-words' | 'export' | 'statistics' | 'about'>('settings');
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   const [preferredSource, setPreferredSource] = useState<'cambridge' | 'merriam-webster' | 'gemini'>('cambridge');
   const [mwApiKey, setMwApiKey] = useState('');
@@ -419,6 +420,10 @@ export function OptionsApp() {
 
   function hasActiveFilters(column: 'contentType' | 'partOfSpeech' | 'dateAdded') {
     return columnFilters[column].length > 0;
+  }
+
+  function toggleSidebar() {
+    setIsSidebarCollapsed(!isSidebarCollapsed);
   }
 
   function handleSave(e: React.FormEvent) {
@@ -727,44 +732,44 @@ export function OptionsApp() {
 
   return (
     <div className="app-container">
-      <div className="sidebar">
-        <div className="sidebar-header">
+      <div className={`sidebar ${isSidebarCollapsed ? 'collapsed' : ''}`}>
+        <div className="sidebar-header" onClick={toggleSidebar} title={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}>
           <div className="brand-container">
             <img src={logoSrc} alt="DefineX Logo" className="brand-logo" />
             <h1>DefineX</h1>
           </div>
         </div>
         <nav className="sidebar-nav">
-          <button className={`nav-item ${activeSection === 'settings' ? 'active' : ''}`} onClick={() => setActiveSection('settings')}>
+          <button className={`nav-item ${activeSection === 'settings' ? 'active' : ''}`} onClick={() => setActiveSection('settings')} data-tooltip="Settings">
             <svg className="nav-item-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
             </svg>
-            Settings
+            <span className="nav-item-text">Settings</span>
           </button>
-          <button className={`nav-item ${activeSection === 'saved-words' ? 'active' : ''}`} onClick={() => setActiveSection('saved-words')}>
+          <button className={`nav-item ${activeSection === 'saved-words' ? 'active' : ''}`} onClick={() => setActiveSection('saved-words')} data-tooltip="Saved Words">
             <svg className="nav-item-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
             </svg>
-            Saved Words
+            <span className="nav-item-text">Saved Words</span>
           </button>
-          <button className={`nav-item ${activeSection === 'export' ? 'active' : ''}`} onClick={() => setActiveSection('export')}>
+          <button className={`nav-item ${activeSection === 'export' ? 'active' : ''}`} onClick={() => setActiveSection('export')} data-tooltip="Export Data">
             <svg className="nav-item-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
             </svg>
-            Export Data
+            <span className="nav-item-text">Export Data</span>
           </button>
-          <button className={`nav-item ${activeSection === 'statistics' ? 'active' : ''}`} onClick={() => setActiveSection('statistics')}>
+          <button className={`nav-item ${activeSection === 'statistics' ? 'active' : ''}`} onClick={() => setActiveSection('statistics')} data-tooltip="Statistics">
             <svg className="nav-item-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
             </svg>
-            Statistics
+            <span className="nav-item-text">Statistics</span>
           </button>
-          <button className={`nav-item ${activeSection === 'about' ? 'active' : ''}`} onClick={() => setActiveSection('about')}>
+          <button className={`nav-item ${activeSection === 'about' ? 'active' : ''}`} onClick={() => setActiveSection('about')} data-tooltip="About">
             <svg className="nav-item-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
-            About
+            <span className="nav-item-text">About</span>
           </button>
         </nav>
       </div>
@@ -1344,7 +1349,7 @@ export function OptionsApp() {
                   <h3>DefineX Dictionary Extension</h3>
                 </div>
                 <div style={{ padding: 24 }}>
-                  <p><strong>Version:</strong> 1.0.1</p>
+                  <p><strong>Version:</strong> 1.0.2</p>
                   <p style={{ marginTop: 12 }}><strong>Description:</strong> A powerful dictionary and translation tool that helps you understand words and phrases while browsing the web.</p>
                   <h4 style={{ marginTop: 24, marginBottom: 12, color: '#1e293b' }}>Features:</h4>
                   <ul style={{ marginLeft: 20, color: '#64748b', lineHeight: 1.6 }}>

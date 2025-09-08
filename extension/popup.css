@@ -125,11 +125,11 @@ body {
 }
 
 .toggle-input:checked + .toggle-slider {
-    background-color: #3b82f6;
+    background-color: #199ebf;
 }
 
 .toggle-input:focus + .toggle-slider {
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    box-shadow: 0 0 0 3px rgba(25, 158, 191, 0.1);
     outline: none;
 }
 
@@ -144,8 +144,8 @@ body {
 
 .status-text {
     font-size: 12px;
-    color: #3b82f6;
-    background: #eff6ff;
+    color: #199ebf;
+    background: #e0f2f7;
     padding: 6px 12px;
     border-radius: 20px;
     display: inline-block;
@@ -176,7 +176,7 @@ body {
     justify-content: center;
     gap: 8px;
     padding: 10px 16px;
-    background-color: #3b82f6;
+    background-color: #199ebf;
     color: white;
     border: none;
     border-radius: 8px;
@@ -188,9 +188,9 @@ body {
 }
 
 .settings-btn:hover {
-    background-color: #2563eb;
+    background-color: #0f7a9a;
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    box-shadow: 0 4px 12px rgba(25, 158, 191, 0.3);
 }
 
 .settings-icon {

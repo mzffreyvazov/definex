@@ -3,7 +3,21 @@
 
 #quick-def-popup {
   position: absolute !important;
-  z-index: 2147483647 !important;
+  z-index: 21474#qdp-save-btn {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 2px 5px;
+  border-radius: 4px;
+  transition: all 0.2s;
+  color: #199ebf;
+}
+
+#qdp-save-btn:hover {
+  background-color: #e0f2f7;
+  transform: scale(1.1);
+}t;
   background-color: #ffffff;
   border: 1px solid #dcdcdc;
   border-radius: 8px;
@@ -171,11 +185,11 @@
   padding: 0 5px;
   border-radius: 4px;
   transition: background-color 0.2s, transform 0.2s;
-  color: #3b82f6;
+  color: #199ebf;
 }
 
 #qdp-audio-btn:hover {
-  background-color: #eff6ff;
+  background-color: #e0f2f7;
   transform: scale(1.1);
 }
 
@@ -188,11 +202,11 @@
   padding: 2px 5px;
   border-radius: 4px;
   transition: all 0.2s;
-  color: #3b82f6;
+  color: #199ebf;
 }
 
 #qdp-save-btn:hover {
-  background-color: #eff6ff;
+  background-color: #e0f2f7;
   transform: scale(1.1);
 }
 
@@ -206,11 +220,11 @@
   border-radius: 4px;
   transition: background-color 0.2s, transform 0.2s;
   margin-left: 5px;
-  color: #3b82f6;
+  color: #199ebf;
 }
 
 #qdp-tts-phrase-btn:hover, #qdp-tts-original-btn:hover {
-  background-color: #eff6ff;
+  background-color: #e0f2f7;
   transform: scale(1.1);
 }
 

@@ -125,13 +125,13 @@ body {
 
 .nav-item:hover {
   background-color: #f1f5f9;
-  color: #3b82f6;
+  color: #199ebf;
 }
 
 .nav-item.active {
-  background-color: #eff6ff;
-  color: #3b82f6;
-  border-right: 3px solid #3b82f6;
+  background-color: #e0f2f7;
+  color: #199ebf;
+  border-right: 3px solid #199ebf;
   font-weight: 500;
 }
 
@@ -204,9 +204,9 @@ body {
 }
 
 .sidebar.collapsed .nav-item.active {
-  background-color: #eff6ff;
-  color: #3b82f6;
-  border-right: 3px solid #3b82f6;
+  background-color: #e0f2f7;
+  color: #199ebf;
+  border-right: 3px solid #199ebf;
   font-weight: 500;
 }
 
@@ -268,8 +268,8 @@ body {
 
 .words-count {
   font-size: 12px;
-  color: #3b82f6;
-  background: #eff6ff;
+  color: #199ebf;
+  background: #e0f2f7;
   padding: 4px 8px;
   border-radius: 4px;
 }
@@ -303,8 +303,8 @@ select, input[type="text"], input[type="password"], .SelectTrigger {
 
 select:focus, input:focus, .SelectTrigger:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: #199ebf;
+  box-shadow: 0 0 0 3px rgba(25, 158, 191, 0.1);
 }
 
 .info-box {
@@ -325,7 +325,7 @@ select:focus, input:focus, .SelectTrigger:focus {
 }
 
 .info-box a {
-  color: #3b82f6;
+  color: #199ebf;
   text-decoration: none;
 }
 
@@ -469,10 +469,10 @@ select:focus, input:focus, .SelectTrigger:focus {
 .word-row:hover { background-color: #f8fafc !important; }
 
 .word-row.selected {
-  background-color: #eff6ff !important; /* use important to override hover */
+  background-color: #e0f2f7 !important; /* use important to override hover */
 }
 .word-row.selected:hover {
-  background-color: #dbeafe !important;
+  background-color: #c7e9f0 !important;
 }
 
 
@@ -517,7 +517,7 @@ select:focus, input:focus, .SelectTrigger:focus {
 .type-badge { font-size: 11px; color: #64748b; background: #f1f5f9; padding: 4px 8px; border-radius: 4px; font-weight: 500; text-transform: capitalize; display: inline-block; }
 
 .pronunciation-cell .cell-content { font-style: italic; color: #64748b; }
-.pos-badge { font-size: 12px; color: #3b82f6; background: #eff6ff; padding: 4px 8px; border-radius: 4px; font-weight: 500; display: inline-block; }
+.pos-badge { font-size: 12px; color: #199ebf; background: #e0f2f7; padding: 4px 8px; border-radius: 4px; font-weight: 500; display: inline-block; }
 .pos-cell .cell-content { color: #059669; font-weight: 500; }
 
 .definition-cell .cell-content { line-height: 1.4; color: #64748b; white-space: normal; overflow: visible; text-overflow: initial; max-width: 100%; word-wrap: break-word; }
@@ -529,7 +529,7 @@ select:focus, input:focus, .SelectTrigger:focus {
   width: 16px;
   height: 16px;
   cursor: pointer;
-  accent-color: #3b82f6;
+  accent-color: #199ebf;
 }
 
 .actions-cell .action-btn {
@@ -558,8 +558,8 @@ select:focus, input:focus, .SelectTrigger:focus {
 
 .btn { padding: 8px 16px; border: 1px solid #d1d5db; border-radius: 6px; background-color: white; color: #374151; font-size: 13px; cursor: pointer; transition: all 0.2s; }
 .btn:hover { background-color: #f9fafb; }
-.btn-primary { background-color: #3b82f6; color: white; border-color: #3b82f6; }
-.btn-primary:hover { background-color: #2563eb; }
+.btn-primary { background-color: #199ebf; color: white; border-color: #199ebf; }
+.btn-primary:hover { background-color: #0f7a9a; }
 .btn-danger { background-color: #ef4444; color: white; border-color: #ef4444; }
 .btn-danger:hover { background-color: #dc2626; }
 
@@ -569,8 +569,8 @@ select:focus, input:focus, .SelectTrigger:focus {
 /* Export Section */
 .export-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; margin-bottom: 32px; }
 .export-card { background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; text-align: center; transition: all 0.2s; }
-.export-card:hover { border-color: #3b82f6; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15); }
-.export-icon { width: 48px; height: 48px; margin: 0 auto 16px; color: #3b82f6; }
+.export-card:hover { border-color: #199ebf; box-shadow: 0 4px 12px rgba(25, 158, 191, 0.15); }
+.export-icon { width: 48px; height: 48px; margin: 0 auto 16px; color: #199ebf; }
 .export-card h3 { font-size: 18px; font-weight: 600; color: #1e293b; margin-bottom: 8px; }
 .export-card p { color: #64748b; font-size: 14px; margin-bottom: 20px; }
 
@@ -648,11 +648,11 @@ select:focus, input:focus, .SelectTrigger:focus {
 }
 
 .column-header.filterable:hover {
-  background-color: #eff6ff;
+  background-color: #e0f2f7;
 }
 
 .column-header.filterable.active {
-  background-color: #dbeafe;
+  background-color: #c7e9f0;
 }
 
 .column-title {
@@ -684,7 +684,7 @@ select:focus, input:focus, .SelectTrigger:focus {
 }
 
 .column-menu-btn.active-filter {
-  color: #3b82f6;
+  color: #199ebf;
 }
 
 .column-menu-btn svg {
@@ -789,7 +789,7 @@ select:focus, input:focus, .SelectTrigger:focus {
 }
 
 .toggle-switch.active {
-  background-color: #3b82f6;
+  background-color: #199ebf;
 }
 
 .toggle-slider {
@@ -819,7 +819,7 @@ select:focus, input:focus, .SelectTrigger:focus {
   border: none;
   border-radius: 6px;
   background-color: transparent;
-  color: #3b82f6;
+  color: #199ebf;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -829,7 +829,7 @@ select:focus, input:focus, .SelectTrigger:focus {
 
 .filter-clear-btn:hover {
   background-color: #f1f5f9;
-  color: #2563eb;
+  color: #0f7a9a;
 }
 
 /* Ensure table headers have relative positioning for absolute positioned filter panels */
@@ -851,7 +851,7 @@ select:focus, input:focus, .SelectTrigger:focus {
 
 .column-header.filterable:hover .column-menu-btn,
 .column-header.filterable.active .column-menu-btn {
-  color: #3b82f6;
+  color: #199ebf;
 }
 
 /* Special handling for non-filterable headers */
@@ -889,7 +889,7 @@ select:focus, input:focus, .SelectTrigger:focus {
 .action-toolbar-label {
   padding-right: 6px;   /* was 8px */
   margin-right: 6px;
-  color: #3b82f6;       /* was 4px */
+  color: #199ebf;       /* was 4px */
 }
 
 .action-toolbar-btn {
@@ -926,10 +926,10 @@ select:focus, input:focus, .SelectTrigger:focus {
   z-index: -1;                /* place background behind text/icon */
 }
 .column-header.filterable:hover::before {
-  background-color: #eff6ff;  /* hover background */
+  background-color: #e0f2f7;  /* hover background */
 }
 .column-header.filterable.active::before {
-  background-color: #dbeafe;  /* active/open background */
+  background-color: #c7e9f0;  /* active/open background */
 }
 
 /* Keep icon color unchanged on hover; only change when there is an active filter */
